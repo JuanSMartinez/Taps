@@ -1,5 +1,0 @@
-C:\Users\mart1304\Documents\Developments\Taps\Taps\bin\Debug\Taps.dll
-C:\Users\mart1304\Documents\Developments\Taps\Taps\bin\Debug\Taps.pdb
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Debug\Taps.csproj.CoreCompileInputs.cache
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Debug\Taps.dll
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Debug\Taps.pdb

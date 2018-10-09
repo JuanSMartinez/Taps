@@ -1,6 +1,0 @@
-C:\Users\mart1304\Documents\Developments\Taps\Taps\bin\Release\Taps.dll
-C:\Users\mart1304\Documents\Developments\Taps\Taps\bin\Release\Taps.pdb
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Release\Taps.csprojAssemblyReference.cache
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Release\Taps.csproj.CoreCompileInputs.cache
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Release\Taps.dll
-C:\Users\mart1304\Documents\Developments\Taps\Taps\obj\Release\Taps.pdb

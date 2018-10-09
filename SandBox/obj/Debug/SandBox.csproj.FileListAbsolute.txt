@@ -1,9 +1,0 @@
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\bin\Debug\SandBox.exe
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\bin\Debug\SandBox.pdb
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\bin\Debug\Taps.dll
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\bin\Debug\Taps.pdb
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\obj\Debug\SandBox.csprojAssemblyReference.cache
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\obj\Debug\SandBox.csproj.CoreCompileInputs.cache
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\obj\Debug\SandBox.csproj.CopyComplete
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\obj\Debug\SandBox.exe
-C:\Users\mart1304\Documents\Developments\Taps\SandBox\obj\Debug\SandBox.pdb
