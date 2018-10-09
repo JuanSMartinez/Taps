@@ -1,0 +1,15 @@
+﻿  Handlers.cpp
+c:\users\mart1304\documents\developments\taps\motucore\handlers.h(24): warning C4091: 'static ': ignored on left of 'Handlers::MotuPlayer::playModes' when no variable is declared
+c:\users\mart1304\documents\developments\taps\motucore\handlers.cpp(215): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  MotuCore.cpp
+c:\users\mart1304\documents\developments\taps\motucore\handlers.h(24): warning C4091: 'static ': ignored on left of 'Handlers::MotuPlayer::playModes' when no variable is declared
+  Phoneme.cpp
+c:\users\mart1304\documents\developments\taps\motucore\phoneme.cpp(27): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+c:\users\mart1304\documents\developments\taps\motucore\phoneme.cpp(55): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+c:\users\mart1304\documents\developments\taps\motucore\phoneme.cpp(66): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\mart1304\documents\developments\taps\motucore\phoneme.cpp(70): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+     Creating library C:\Users\mart1304\Documents\Developments\Taps\x64\Release\MotuCore.lib and object C:\Users\mart1304\Documents\Developments\Taps\x64\Release\MotuCore.exp
+  Generating code
+  All 528 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  MotuCore.vcxproj -> C:\Users\mart1304\Documents\Developments\Taps\x64\Release\MotuCore.dll

@@ -1,0 +1,3 @@
+﻿  MotuCore.cpp
+c:\users\mart1304\documents\developments\taps\motucore\motucore.cpp(48): error C2039: 'j': is not a member of 'simpleSineData'
+  c:\users\mart1304\documents\developments\taps\motucore\motucore.cpp(6): note: see declaration of 'simpleSineData'
