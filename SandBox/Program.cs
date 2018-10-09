@@ -34,17 +34,17 @@ namespace SandBox
                 }
             
             Motu.PlayMatrix(matrix, channels, matrixHeight);
-            Console.WriteLine("Sent to play");
         }
         static void Main(string[] args)
         {
             Program prog = new Program();
             Motu.CreateStructures();
             Console.WriteLine("Creation"  );
-            Console.WriteLine("Use default output");
-            Motu.UseDefaultOutput();
-            Console.WriteLine("Play test sine " + Motu.PlaySineTest());
-            //Console.WriteLine("Play OO " + Motu.PlayPhonemeCode(32));
+            
+            //Console.WriteLine("Use default output");
+            //Motu.UseDefaultOutput();
+            //Console.WriteLine("Play test sine " + Motu.PlaySineTest());
+            Console.WriteLine("Play OO " + Motu.PlayPhonemeCode(32));
             //Console.WriteLine("Play a matrix ");
             //prog.TestMatrix();
             Console.Read();

@@ -12,7 +12,7 @@ namespace Handlers
 	//Open the stream
 	bool MotuPlayer::openStream()
 	{
-		playing = 1;
+		playing = true;
 		PaStreamParameters outputParameters;
 
 		outputParameters.device = device;
@@ -60,6 +60,7 @@ namespace Handlers
 	//Close the stream
 	bool MotuPlayer::closeStream()
 	{
+		playing = false;
 		if (stream == 0)
 			return false;
 		PaError err = Pa_CloseStream(stream);
@@ -86,6 +87,7 @@ namespace Handlers
 	//Stop a stream
 	bool MotuPlayer::stopStream()
 	{
+		
 		if (stream == 0)
 			return false;
 
@@ -99,7 +101,7 @@ namespace Handlers
 	{
 		mode = sine;
 		logCode = paNoError;
-		playing = 0;
+		playing = false;
 		phoneme_row_table_index = 0;
 		dynamic_table_height = 0;
 		phoneme_index = -1;
@@ -139,7 +141,7 @@ namespace Handlers
 	{
 		mode = sine;
 		logCode = paNoError;
-		playing = 0;
+		playing = false;
 		phoneme_row_table_index = 0;
 		dynamic_table_height = 0;
 		matrix_row_index = 0;
@@ -204,7 +206,7 @@ namespace Handlers
 	//Is playing
 	bool MotuPlayer::isPlaying()
 	{
-		return playing == 1;
+		return playing;
 	}
 
 	//Set a phoneme index
@@ -267,5 +269,6 @@ namespace Handlers
 	{
 		use_motu = false;
 	}
+
 
 }

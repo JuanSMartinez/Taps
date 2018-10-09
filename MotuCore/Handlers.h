@@ -74,12 +74,11 @@ namespace Handlers
 		//use the default output as playback device
 		void useDefault();
 
-
 	private:
 		playModes mode;
 		PaStream *stream;
 		int logCode;
-		int playing;
+		bool playing;
 		int phoneme_row_table_index;
 		int dynamic_table_height;
 		int matrix_row_index;

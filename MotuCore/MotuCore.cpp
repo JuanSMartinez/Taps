@@ -134,7 +134,7 @@ DLLEXPORT int getLogCode()
 }
 
 //Is the device playing
-DLLEXPORT bool isPlaying()
+DLLEXPORT bool isMotuPlaying()
 {
 	return player->isPlaying();
 }
@@ -150,4 +150,5 @@ DLLEXPORT void useDefaultOutput()
 {
 	player->useDefault();
 }
+
 

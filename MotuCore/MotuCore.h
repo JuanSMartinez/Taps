@@ -17,8 +17,8 @@ extern "C"
 	//Returns log code
 	DLLEXPORT int getLogCode();
 
-	//Returns playing flag
-	DLLEXPORT bool isPlaying();
+	//Returns true if motu is playing a signal
+	DLLEXPORT bool isMotuPlaying();
 
 	//Play a specific matrix 
 	DLLEXPORT int playMatrix(float* matrix, int width, int height);
