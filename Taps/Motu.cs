@@ -115,5 +115,30 @@ namespace Taps
 
     }
 
+    public sealed class Singleton
+    {
+        private static Singleton instance = null;
+        private static readonly object lockObject = new object();
+
+        Singleton()
+        {
+
+        }
+
+        public static Singleton Instance
+        {
+            get
+            {
+                lock(lockObject)
+                {
+                    if (instance == null)
+                        instance = new Singleton();
+                    return instance;
+                }
+            }
+        }
+
+
+    }
     
 }
