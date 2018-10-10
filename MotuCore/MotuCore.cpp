@@ -28,6 +28,7 @@ void AsyncSinePlay(void*)
 	player->restartControlVariables();
 	Pa_Terminate();
 error:
+	Pa_Terminate();
 	_endthread();
 }
 
@@ -55,6 +56,7 @@ void AsyncPhonemePlay(void*)
 	player->restartControlVariables();
 	Pa_Terminate();
 error:
+	Pa_Terminate();
 	_endthread();
 }
 
@@ -82,6 +84,7 @@ void AsyncMatrixPlay(void*)
 	player->restartControlVariables();
 	Pa_Terminate();
 error:
+	Pa_Terminate();
 	_endthread();
 }
 

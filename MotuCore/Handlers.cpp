@@ -60,7 +60,7 @@ namespace Handlers
 	//Close the stream
 	bool MotuPlayer::closeStream()
 	{
-		playing = false;
+		
 		if (stream == 0)
 			return false;
 		PaError err = Pa_CloseStream(stream);

@@ -120,9 +120,16 @@ namespace Taps
         private static Singleton instance = null;
         private static readonly object lockObject = new object();
 
+        [DllImport("MotuCore")]
+        static extern int testPlay();
+        [DllImport("MotuCore")]
+        static extern bool isMotuPlaying();
+        [DllImport("MotuCore")]
+        static extern void createStructures();
+
         Singleton()
         {
-
+            createStructures();
         }
 
         public static Singleton Instance
@@ -136,6 +143,20 @@ namespace Taps
                     return instance;
                 }
             }
+        }
+
+        public bool TestPlay()
+        {
+            return testPlay() == 0;
+            //if (!isMotuPlaying())
+            //    return testPlay() == 0;
+            //else
+            //    return false;
+        }
+
+        public bool IsMotuPlaying()
+        {
+            return isMotuPlaying();
         }
 
 
