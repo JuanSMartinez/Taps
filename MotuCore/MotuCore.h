@@ -9,10 +9,10 @@ extern "C"
 	DLLEXPORT void createStructures();
 
 	//Plays a matrix that corresponds to the phoneme code
-	DLLEXPORT int play(int phonemeCode);
+	DLLEXPORT void play(int phonemeCode);
 
 	//Play a simple sine wave to test the connection in 24 channels
-	DLLEXPORT int testPlay();
+	DLLEXPORT void testPlay();
 
 	//Returns log code
 	DLLEXPORT int getLogCode();
@@ -21,7 +21,7 @@ extern "C"
 	DLLEXPORT bool isMotuPlaying();
 
 	//Play a specific matrix 
-	DLLEXPORT int playMatrix(float* matrix, int width, int height);
+	DLLEXPORT void playMatrix(float* matrix, int width, int height);
 
 	//Use motu as the playback device
 	DLLEXPORT void useMotu();

@@ -116,27 +116,28 @@ error:
 
 
 /*Test a sine wave in all 24 channels*/
-DLLEXPORT int testPlay()
+DLLEXPORT void testPlay()
 {
 	player->changePlayMode(Handlers::MotuPlayer::sine);
 	_beginthread(AsyncSinePlay, 0, NULL);
-	return 0;
+
 }
 
-DLLEXPORT int play(int phonemeCode) 
+DLLEXPORT void play(int phonemeCode)
 {
 	player->setPhonemeIndex(phonemeCode);
 	player->changePlayMode(Handlers::MotuPlayer::phoneme);
 	_beginthread(AsyncPhonemePlay, 0, NULL);
-	return 0;
+
 }
 
 //Play a specific matrix 
-DLLEXPORT int playMatrix(float* matrix, int width, int height)
+DLLEXPORT void playMatrix(float* matrix, int width, int height)
 {
 	player->changePlayMode(Handlers::MotuPlayer::matrix);
 	player->setArbitraryMatrixParameters(matrix, width, height);
 	_beginthread(AsyncMatrixPlay, 0, NULL);
+
 }
 
 /*Create necessary data structures*/
