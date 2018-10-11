@@ -2,89 +2,115 @@
 #include "MotuCore.h"
 
 Handlers::MotuPlayer* player;
+std::mutex* mutex;
 
 void AsyncSinePlay(void*) 
 {
-	PaError initResult = Pa_Initialize();
-	if (initResult != paNoError) goto error;
-	if (player->isUsingMotu())
+	if (mutex->try_lock())
 	{
-		if (!player->setMOTU()) goto error;
+		PaError initResult = Pa_Initialize();
+		if (initResult != paNoError) goto error;
+		if (player->isUsingMotu())
+		{
+			if (!player->setMOTU()) goto error;
+		}
+		else
+		{
+			if (!player->setDefaultOutput()) goto error;
+		}
+
+		if (player->openStream())
+		{
+			if (player->startStream())
+			{
+				Pa_Sleep(2000);
+				player->stopStream();
+			}
+			player->closeStream();
+		}
+		player->restartControlVariables();
+		Pa_Terminate();
+		mutex->unlock();
+		_endthread();
 	}
 	else
-	{
-		if (!player->setDefaultOutput()) goto error;
-	}
-
-	if (player->openStream()) 
-	{
-		if (player->startStream())
-		{
-			Pa_Sleep(2000);
-			player->stopStream();
-		}
-		player->closeStream();
-	}
-	player->restartControlVariables();
-	Pa_Terminate();
+		_endthread();
+	
 error:
+	mutex->unlock();
 	Pa_Terminate();
 	_endthread();
 }
 
 void AsyncPhonemePlay(void*)
 {
-	PaError initResult = Pa_Initialize();
-	if (initResult != paNoError) goto error;
-	if (player->isUsingMotu())
+	if (mutex->try_lock())
 	{
-		if (!player->setMOTU()) goto error;
+		PaError initResult = Pa_Initialize();
+		if (initResult != paNoError) goto error;
+		if (player->isUsingMotu())
+		{
+			if (!player->setMOTU()) goto error;
+		}
+		else
+		{
+			if (!player->setDefaultOutput()) goto error;
+		}
+		if (player->openStream())
+		{
+			if (player->startStream())
+			{
+				while (player->isStreamActive());
+				player->stopStream();
+			}
+			player->closeStream();
+		}
+		player->restartControlVariables();
+		Pa_Terminate();
+		mutex->unlock();
+		_endthread();
 	}
 	else
-	{
-		if (!player->setDefaultOutput()) goto error;
-	}
-	if (player->openStream())
-	{
-		if (player->startStream())
-		{
-			while (player->isStreamActive()) ;
-			player->stopStream();
-		}
-		player->closeStream();
-	}
-	player->restartControlVariables();
-	Pa_Terminate();
+		_endthread();
 error:
+	mutex->unlock();
 	Pa_Terminate();
 	_endthread();
 }
 
 void AsyncMatrixPlay(void*)
 {
-	PaError initResult = Pa_Initialize();
-	if (initResult != paNoError) goto error;
-	if (player->isUsingMotu())
+	if (mutex->try_lock())
 	{
-		if (!player->setMOTU()) goto error;
+		PaError initResult = Pa_Initialize();
+		if (initResult != paNoError) goto error;
+		if (player->isUsingMotu())
+		{
+			if (!player->setMOTU()) goto error;
+		}
+		else
+		{
+			if (!player->setDefaultOutput()) goto error;
+		}
+		if (player->openStream())
+		{
+			if (player->startStream())
+			{
+				while (player->isStreamActive());
+				player->stopStream();
+			}
+			player->closeStream();
+		}
+		player->restartControlVariables();
+		Pa_Terminate();
+		mutex->unlock();
+		_endthread();
 	}
 	else
-	{
-		if (!player->setDefaultOutput()) goto error;
-	}
-	if (player->openStream())
-	{
-		if (player->startStream())
-		{
-			while (player->isStreamActive());
-			player->stopStream();
-		}
-		player->closeStream();
-	}
-	player->restartControlVariables();
-	Pa_Terminate();
+		_endthread();
 error:
 	Pa_Terminate();
+	mutex->unlock();
 	_endthread();
 }
 
@@ -128,6 +154,7 @@ DLLEXPORT int playMatrix(float* matrix, int width, int height)
 DLLEXPORT void createStructures()
 {
 	player = new Handlers::MotuPlayer();
+	mutex = new std::mutex;
 }
 
 //Return the log code

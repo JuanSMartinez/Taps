@@ -11,6 +11,7 @@
 #include <portaudio.h>
 #include <math.h>
 #include <process.h>
+#include <mutex>
 #include <string>
 #include "Phoneme.h"
 

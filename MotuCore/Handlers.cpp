@@ -108,6 +108,7 @@ namespace Handlers
 		matrix_row_index = 0;
 		channels = 24;
 		use_motu = true;
+
 		int i;
 		for (i = 0; i < SINE_TABLE_SIZE; i++)
 		{
