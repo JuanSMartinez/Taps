@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.IO;
+using System.Diagnostics;
 
 namespace Taps
 {
@@ -77,10 +79,17 @@ namespace Taps
             { 38, "OY"}
         };
 
+        //Path to cygwin with flite compiled and installed
+        public string CygwinPath
+        {
+            get; set;
+        }
+
         //Constructor
         Motu()
         {
             createStructures();
+            CygwinPath = "C:\\cygwin64\\bin\\flite.exe";
         }
 
         //Instance as a property
@@ -149,6 +158,22 @@ namespace Taps
             int width = matrix.GetLength(1);
             float[] flatMatrix = matrix.Cast<float>().ToArray();
             PlayFlatMatrix(flatMatrix, width, height);
+        }
+
+        //Get string sequence of phonemes of a text using flite
+        public string GetPhonemeSequenceOf(string sentence)
+        {
+            Process process = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.FileName = CygwinPath;
+            startInfo.Arguments = "/c -t \""+sentence+"\" -ps -o none";
+            process.StartInfo = startInfo;
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            return output;
         }
 
         //Launc a thread to play a flattened matrix

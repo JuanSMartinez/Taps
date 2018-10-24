@@ -39,16 +39,6 @@ namespace SandBox
         static void Main(string[] args)
         {
             Program prog = new Program();
-            //Motu.CreateStructures();
-            //Console.WriteLine("Creation"  );
-
-            //Console.WriteLine("Use default output");
-            //Motu.UseDefaultOutput();
-            //Console.WriteLine("Play test sine " + Motu.PlaySineTest());
-            //Console.WriteLine("Play test sine " + Motu.PlaySineTest());
-            //Console.WriteLine("Play OO " + Motu.PlayPhonemeCode(32));
-            //Console.WriteLine("Play a matrix ");
-            //prog.TestMatrix();
 
             Console.WriteLine("Using singleton");
             Motu instance = Motu.Instance;
@@ -56,9 +46,13 @@ namespace SandBox
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
             //Console.WriteLine("TestPlay 2 " + instance.TestPlay());
-            Console.WriteLine("Play a matrix ");
-            prog.TestMatrixSingleton();
-            prog.TestMatrixSingleton();
+            //Console.WriteLine("Play a matrix ");
+            //prog.TestMatrixSingleton();
+            //prog.TestMatrixSingleton();
+
+            Console.WriteLine("Calling Flite");
+            Console.WriteLine(instance.GetPhonemeSequenceOf("Hello world. New sentence with a lot of characters to translate"));
+
             Console.Read();
         }
     }
