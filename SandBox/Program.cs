@@ -50,9 +50,11 @@ namespace SandBox
             //prog.TestMatrixSingleton();
             //prog.TestMatrixSingleton();
 
-            Console.WriteLine("Calling Flite");
-            Console.WriteLine(instance.GetPhonemeSequenceOf("Hello world. New sentence with a lot of characters to translate"));
+            //Console.WriteLine("Calling Flite");
+            //Console.WriteLine(instance.GetPhonemeSequenceOf("Hello world. New sentence with a lot of characters to translate"));
 
+            string testing = "hello world, this is a normal sentence with extra . punctuation!.";
+            instance.PlaySentence(testing, 500, 1000);
             Console.Read();
         }
     }
