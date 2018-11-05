@@ -76,7 +76,17 @@ namespace Taps
             { 35, "AY"},
             { 36, "I"},
             { 37, "OW"},
-            { 38, "OY"}
+            { 38, "OY"},
+            {39,"DH&UH"},
+            {40,"UH&N"},
+            {41,"T&UH"},
+            {42,"N&D"},
+            { 43,"S&T"},
+            { 44,"IH&T"},
+            { 45,"IH&N"},
+            { 46,"IH&NG"},
+            {47,"N&T"},
+            { 48,"Y&OO"}
         };
 
         //Path to cygwin with flite compiled and installed
@@ -268,13 +278,16 @@ namespace Taps
                                 {
                                     string[] pair = phonemeLabel.Split('-');
                                     Instance.PlayPhoneme(pair[0]);
+                                    Console.WriteLine(pair[0]);
                                     Thread.Sleep(ICI);
                                     Instance.PlayPhoneme(pair[1]);
+                                    Console.WriteLine(pair[1]);
                                     Thread.Sleep(ICI);
                                 }
                                 else
                                 {
                                     Instance.PlayPhoneme(phonemeLabel);
+                                    Console.WriteLine(phonemeLabel);
                                     Thread.Sleep(ICI);
                                 }
                                 
