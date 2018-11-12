@@ -37,56 +37,56 @@ namespace Taps
         static extern void useDefaultOutput();
 
         //Phoneme dictionary
-        private static Dictionary<int, string> phonemeList = new Dictionary<int, string>(){
-            { 0, "P" },
-            { 1, "T" },
-            { 2, "K" },
-            { 3, "B" },
-            { 4, "D" },
-            { 5, "G" },
-            { 6, "CH"},
-            { 7, "J" },
-            { 8, "F" },
-            { 9, "V" },
-            { 10, "TH"},
-            { 11, "DH"},
-            { 12, "S"},
-            { 13, "Z"},
-            { 14, "SH"},
-            { 15, "ZH"},
-            { 16, "H" },
-            { 17, "M" },
-            { 18, "N" },
-            { 19, "NG"},
-            { 20, "L"},
-            { 21, "R"},
-            { 22, "W"},
-            { 23, "Y"},
-            { 24, "AE"},
-            { 25, "AH"},
-            { 26, "OE"},
-            { 27, "EH"},
-            { 28, "ER"},
-            { 29, "IH"},
-            { 30, "EE"},
-            { 31, "UH"},
-            { 32, "OO"},
-            { 33, "UU"},
-            { 34, "AW"},
-            { 35, "AY"},
-            { 36, "I"},
-            { 37, "OW"},
-            { 38, "OY"},
-            {39,"DH&UH"},
-            {40,"UH&N"},
-            {41,"T&UH"},
-            {42,"N&D"},
-            { 43,"S&T"},
-            { 44,"IH&T"},
-            { 45,"IH&N"},
-            { 46,"IH&NG"},
-            {47,"N&T"},
-            { 48,"Y&OO"}
+        private static Dictionary<string, int> phonemeList = new Dictionary<string, int>(){
+            { "P", 0 },
+            { "T", 1 },
+            { "K", 2 },
+            { "B", 3 },
+            { "D", 4 },
+            { "G", 5 },
+            { "CH", 6},
+            { "J", 7 },
+            { "F", 8 },
+            { "V", 9 },
+            { "TH", 10},
+            { "DH", 11},
+            { "S", 12},
+            { "Z", 13},
+            { "SH", 14},
+            { "ZH", 15},
+            { "H", 16 },
+            { "M", 17 },
+            { "N", 18 },
+            { "NG", 19},
+            { "L", 20},
+            { "R", 21},
+            { "W", 22},
+            { "Y", 23},
+            { "AE", 24},
+            { "AH", 25},
+            { "OE", 26},
+            { "EH", 27},
+            { "ER", 28},
+            { "IH", 29},
+            { "EE", 30},
+            { "UH", 31},
+            { "OO", 32},
+            { "UU", 33},
+            { "AW", 34},
+            { "AY", 35},
+            { "I", 36},
+            { "OW", 37},
+            { "OY", 38},
+            { "DH&UH", 39},
+            { "UH&N", 40},
+            { "T&UH", 41},
+            { "N&D", 42},
+            { "S&T", 43},
+            { "IH&T", 44},
+            { "IH&N", 45},
+            { "IH&NG", 46},
+            { "N&T", 47},
+            { "Y&OO", 48}
         };
 
         //Path to cygwin with flite compiled and installed
@@ -119,15 +119,14 @@ namespace Taps
         //Play a phoneme by the label
         public bool PlayPhoneme(string phonemeLabel)
         {
-            foreach (KeyValuePair<int, string> pair in phonemeList)
+            int phonemeCode;
+            if (phonemeList.TryGetValue(phonemeLabel, out phonemeCode))
             {
-                if (string.Compare(pair.Value, phonemeLabel.TrimEnd()) == 0)
-                {
-                    play(pair.Key);
-                    return true;
-                }
+                play(phonemeCode);
+                return true;
             }
-            return false;
+            else
+                return false;
         }
 
         //Play phoneme by code
