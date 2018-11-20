@@ -3,6 +3,8 @@
 
 #define DLLEXPORT _declspec(dllexport)
 
+typedef void(__stdcall * FinishedPlayingCallback)(int result);
+
 extern "C"
 {
 	//Create data structures
@@ -18,7 +20,7 @@ extern "C"
 	DLLEXPORT int getLogCode();
 
 	//Returns true if motu is playing a signal
-	DLLEXPORT bool isMotuPlaying();
+	DLLEXPORT int isMotuPlaying();
 
 	//Play a specific matrix 
 	DLLEXPORT void playMatrix(float* matrix, int width, int height);
@@ -28,6 +30,9 @@ extern "C"
 
 	//Use the default device as the playback device
 	DLLEXPORT void useDefaultOutput();
+
+	//Set a finished playing callback
+	DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingCallback handler);
 }
 
 

@@ -18,6 +18,13 @@ namespace Taps
         //Lock object 
         private static readonly object lockObject = new object();
 
+        //Finished playing callback delegate
+        private delegate void FinishedPlayingCallback(int result);
+        private FinishedPlayingCallback callbackInstance;
+
+        //Initialization flag
+        private bool Initialized { get; set; }
+
         //DLL imports of the native core library
         [DllImport("MotuCore")]
         static extern void testPlay();
@@ -35,6 +42,8 @@ namespace Taps
         static extern void useMotu();
         [DllImport("MotuCore")]
         static extern void useDefaultOutput();
+        [DllImport("MotuCore")]
+        static extern void setFinishedPlayingCallback(FinishedPlayingCallback callback);
 
         //Phoneme dictionary
         private static Dictionary<string, int> phonemeList = new Dictionary<string, int>(){
@@ -98,8 +107,12 @@ namespace Taps
         //Constructor
         Motu()
         {
-            createStructures();
+            Initialized = false;
+            Thread initilializationThred = new Thread(new ThreadStart(Initialize));
+            initilializationThred.Start();
             CygwinPath = "C:\\cygwin64\\bin\\flite.exe";
+            callbackInstance = new FinishedPlayingCallback(CallbackHandler);
+            setFinishedPlayingCallback(callbackInstance);
         }
 
         //Instance as a property
@@ -116,64 +129,103 @@ namespace Taps
             }
         }
 
+        //Initialize structures in a thread
+        private void Initialize()
+        {
+            createStructures();
+            Initialized = true;
+        }
+
+        //Is MOTU initialized
+        public bool IsInitialized()
+        {
+            return Initialized;
+        }
+        
+
+        //Set normal playing finished callback 
+        public void SetDefaultCallback()
+        {
+            setFinishedPlayingCallback(callbackInstance);
+        }
+
+        //Finished playing callback handler
+        private void CallbackHandler(int result)
+        {
+            Console.WriteLine("Default callback: Finished playing with code " + result);
+        }
+
         //Play a phoneme by the label
         public bool PlayPhoneme(string phonemeLabel)
         {
-            int phonemeCode;
-            if (phonemeList.TryGetValue(phonemeLabel, out phonemeCode))
+            if (Initialized)
             {
-                play(phonemeCode);
-                return true;
+                int phonemeCode;
+                if (phonemeList.TryGetValue(phonemeLabel, out phonemeCode))
+                {
+                    play(phonemeCode);
+                    return true;
+                }
+                else
+                    return false;
             }
-            else
-                return false;
+            else return false;
         }
 
         //Play phoneme by code
         public void PlayPhonemeByCode(int code)
         {
-            if(code >= 0 && code < phonemeList.Count)
+            if(code >= 0 && code < phonemeList.Count && Initialized)
                 play(code);
         }
 
         //Test a sine wave
         public void TestPlay()
         {
-            testPlay();
+            if(Initialized)
+                testPlay();
         }
 
         //use motu as the default playback device
         public void UseMotu()
         {
-            useMotu();
+            if(Initialized)
+                useMotu();
         }
 
         //use the default playback device
         public void UseDefault()
         {
-            useDefaultOutput();
+            if(Initialized)
+                useDefaultOutput();
         }
 
         //Is motu currently playing
         public bool IsMotuPlaying()
         {
-            return isMotuPlaying();
+            return Initialized && isMotuPlaying();
         }
 
         //Play a matrix
         public void PlayMatrix(float[,] matrix)
         {
-            int height = matrix.GetLength(0);
-            int width = matrix.GetLength(1);
-            float[] flatMatrix = matrix.Cast<float>().ToArray();
-            PlayFlatMatrix(flatMatrix, width, height);
+            if (Initialized)
+            {
+                int height = matrix.GetLength(0);
+                int width = matrix.GetLength(1);
+                float[] flatMatrix = matrix.Cast<float>().ToArray();
+                PlayFlatMatrix(flatMatrix, width, height);
+            }
         }
 
         //Play a sentence with a certain ICI and IWI value
         public void PlaySentence(string sentence, int ici, int iwi)
         {
-            SentencePlayingThread thread = new SentencePlayingThread(ici, iwi, sentence);
-            thread.Start();
+            if (Initialized)
+            {
+                SentencePlayingThread thread = new SentencePlayingThread(ici, iwi, sentence);
+                thread.Start();
+            }
 
         }
 
@@ -192,6 +244,10 @@ namespace Taps
             private int ICI { get; set; }
             private int IWI { get; set; }
             private string Sentence { get; set; }
+            private bool Running { get; set; }
+            private Queue<QueuedElement> queue;
+
+            private FinishedPlayingCallback syncCallbackInstance;
 
             private Dictionary<string, string> fliteMapping;
 
@@ -200,6 +256,9 @@ namespace Taps
                 ICI = ici;
                 IWI = iwi;
                 Sentence = sentence;
+                syncCallbackInstance = new FinishedPlayingCallback(CallbackHandler);
+                setFinishedPlayingCallback(syncCallbackInstance);
+                queue = new Queue<QueuedElement>();
                 InitializeMapping();
 
             }
@@ -255,6 +314,7 @@ namespace Taps
 
             public void Start()
             {
+                
                 _thread = new Thread(new ThreadStart(Run));
                 _thread.Start();
             }
@@ -276,24 +336,46 @@ namespace Taps
                                 if (phonemeLabel.Contains("-"))
                                 {
                                     string[] pair = phonemeLabel.Split('-');
-                                    Instance.PlayPhoneme(pair[0]);
-                                    Console.WriteLine(pair[0]);
-                                    Thread.Sleep(ICI);
-                                    Instance.PlayPhoneme(pair[1]);
-                                    Console.WriteLine(pair[1]);
-                                    Thread.Sleep(ICI);
+                                    queue.Enqueue(new QueuedElement(pair[0], QueuedElement.types.phoneme));
+                                    //Instance.PlayPhoneme(pair[0]);
+                                    //Console.WriteLine(pair[0]);
+                                    //Thread.Sleep(ICI);
+
+                                    queue.Enqueue(new QueuedElement(pair[1], QueuedElement.types.phoneme));
+                                    //Instance.PlayPhoneme(pair[1]);
+                                    //Console.WriteLine(pair[1]);
+                                    //Thread.Sleep(ICI);
                                 }
                                 else
                                 {
-                                    Instance.PlayPhoneme(phonemeLabel);
-                                    Console.WriteLine(phonemeLabel);
-                                    Thread.Sleep(ICI);
+                                    queue.Enqueue(new QueuedElement(phonemeLabel, QueuedElement.types.phoneme));
+                                    //Instance.PlayPhoneme(phonemeLabel);
+                                    //Console.WriteLine(phonemeLabel);
+                                    //Thread.Sleep(ICI);
                                 }
                                 
                             }
                         }
                     }
-                    Thread.Sleep(IWI);
+                    queue.Enqueue(new QueuedElement("Pause", QueuedElement.types.wordPause));
+                    //Thread.Sleep(IWI);
+                }
+
+                try
+                {
+                    QueuedElement first = queue.Dequeue();
+                    if (first.Type == QueuedElement.types.phoneme)
+                    {
+                        Instance.PlayPhoneme(first.Symbol);
+                        Running = true;
+                        while (Running) ;
+                    }
+                    else
+                        Console.WriteLine("The first element is not a phoneme");
+                }
+                catch(InvalidOperationException emptyException)
+                {
+                    Console.WriteLine("Queue empty before starting");
                 }
             }
 
@@ -321,6 +403,48 @@ namespace Taps
                 return result;
             }
 
+            private void CallbackHandler(int result)
+            {
+                if(result == 0)
+                {
+                    try
+                    {
+                        QueuedElement element = queue.Dequeue();
+                        if (element.Type == QueuedElement.types.phoneme)
+                        {
+                            Thread.Sleep(ICI);
+                            Instance.PlayPhoneme(element.Symbol);
+                        }
+                        else
+                        {
+                            Thread.Sleep(IWI);
+                            CallbackHandler(0);
+                        }
+                    }
+                    catch (InvalidOperationException emptyException)
+                    {
+                        Instance.SetDefaultCallback();
+                        Running = false;
+                    }
+                }
+                else
+                {
+                    Instance.SetDefaultCallback();
+                    Running = false;
+                }
+            }
+
+            internal class QueuedElement
+            {
+                public enum types { wordPause, phoneme};
+                public types Type { get; set; }
+                public string Symbol { get; set; }
+                public QueuedElement(string symbol, types type)
+                {
+                    Type = type;
+                    Symbol = symbol;
+                }
+            }
         }
         
         //Matrix playing thread
@@ -331,29 +455,43 @@ namespace Taps
             private float[] matrix;
             private int width;
             private int height;
+            private FinishedPlayingCallback syncCallbackInstance;
+            private bool stop;
 
             public MatrixPlayingThread(float[] matrix, int width, int height)
             {
                 this.matrix = matrix;
                 this.width = width;
                 this.height = height;
+                syncCallbackInstance = new FinishedPlayingCallback(CallbackHandler);
+                setFinishedPlayingCallback(syncCallbackInstance);
+                stop = false;
             }
 
             public void Start()
             {
-                _thread = new Thread(new ThreadStart(this.Run));
+                _thread = new Thread(new ThreadStart(Run));
                 _thread.Start();
             }
 
             private void Run()
             {
-                GCHandle handle = GCHandle.Alloc(this.matrix, GCHandleType.Pinned);
+                GCHandle handle = GCHandle.Alloc(matrix, GCHandleType.Pinned);
                 IntPtr pointer = handle.AddrOfPinnedObject();
-                playMatrix(pointer, this.width, this.height);
-                while (isMotuPlaying())
+                playMatrix(pointer, width, height);
+                while (!stop)
                     ;
                 handle.Free();
                 
+            }
+
+            private void CallbackHandler(int result)
+            {
+                if(result == -1)
+                {
+                    Console.WriteLine("Finish playing with error");
+                }
+                stop = true;
             }
         }
 

@@ -42,6 +42,9 @@ namespace SandBox
 
             Console.WriteLine("Using singleton");
             Motu instance = Motu.Instance;
+            Console.WriteLine("Waiting for initialization ...");
+            while (!instance.IsInitialized()) ;
+            Console.WriteLine("Done");
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -53,10 +56,12 @@ namespace SandBox
             //Console.WriteLine("Calling Flite");
             //Console.WriteLine(instance.GetPhonemeSequenceOf("Hello world. New sentence with a lot of characters to translate"));
 
-            //string testing = "hello world";
-            //instance.PlaySentence(testing, 500, 2000);
+            string testing = "flame";
+            instance.PlaySentence(testing, 400, 100);
 
-            instance.PlayPhoneme("IH&NG");
+            //instance.PlayPhoneme("IH&NG");
+            //instance.PlayPhoneme("P");
+            //instance.PlayPhoneme("L");
             Console.Read();
         }
     }

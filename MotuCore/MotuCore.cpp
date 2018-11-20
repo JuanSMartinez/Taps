@@ -3,11 +3,14 @@
 
 Handlers::MotuPlayer* player;
 std::mutex* mutex;
+FinishedPlayingCallback Handler;
+
 
 void AsyncSinePlay(void*) 
 {
 	if (mutex->try_lock())
 	{
+		player->changePlayMode(Handlers::MotuPlayer::sine);
 		PaError initResult = Pa_Initialize();
 		if (initResult != paNoError) goto error;
 		if (player->isUsingMotu())
@@ -31,21 +34,26 @@ void AsyncSinePlay(void*)
 		player->restartControlVariables();
 		Pa_Terminate();
 		mutex->unlock();
+		Handler(0);
 		_endthread();
 	}
 	else
 		_endthread();
 	
 error:
+	Handler(-1);
 	mutex->unlock();
 	Pa_Terminate();
 	_endthread();
 }
 
-void AsyncPhonemePlay(void*)
+void AsyncPhonemePlay(void* phonemeCode)
 {
 	if (mutex->try_lock())
 	{
+		int code = (int)phonemeCode;
+		player->setPhonemeIndex(code);
+		player->changePlayMode(Handlers::MotuPlayer::phoneme);
 		PaError initResult = Pa_Initialize();
 		if (initResult != paNoError) goto error;
 		if (player->isUsingMotu())
@@ -68,15 +76,20 @@ void AsyncPhonemePlay(void*)
 		player->restartControlVariables();
 		Pa_Terminate();
 		mutex->unlock();
+		Handler(0);
 		_endthread();
 	}
-	else
+	else 
+	{
 		_endthread();
+	}
 error:
+	Handler(-1);
 	mutex->unlock();
 	Pa_Terminate();
 	_endthread();
 }
+
 
 void AsyncMatrixPlay(void*)
 {
@@ -104,11 +117,13 @@ void AsyncMatrixPlay(void*)
 		player->restartControlVariables();
 		Pa_Terminate();
 		mutex->unlock();
+		Handler(0);
 		_endthread();
 	}
 	else
 		_endthread();
 error:
+	Handler(-1);
 	Pa_Terminate();
 	mutex->unlock();
 	_endthread();
@@ -118,17 +133,15 @@ error:
 /*Test a sine wave in all 24 channels*/
 DLLEXPORT void testPlay()
 {
-	player->changePlayMode(Handlers::MotuPlayer::sine);
+	
 	_beginthread(AsyncSinePlay, 0, NULL);
 
 }
 
 DLLEXPORT void play(int phonemeCode)
 {
-	player->setPhonemeIndex(phonemeCode);
-	player->changePlayMode(Handlers::MotuPlayer::phoneme);
-	_beginthread(AsyncPhonemePlay, 0, NULL);
-
+	_beginthread(AsyncPhonemePlay, 0, (void*)phonemeCode);
+	
 }
 
 //Play a specific matrix 
@@ -145,6 +158,7 @@ DLLEXPORT void createStructures()
 {
 	player = new Handlers::MotuPlayer();
 	mutex = new std::mutex;
+	Handler = 0;
 }
 
 //Return the log code
@@ -154,7 +168,7 @@ DLLEXPORT int getLogCode()
 }
 
 //Is the device playing
-DLLEXPORT bool isMotuPlaying()
+DLLEXPORT int isMotuPlaying()
 {
 	return player->isPlaying();
 }
@@ -169,6 +183,12 @@ DLLEXPORT void useMotu()
 DLLEXPORT void useDefaultOutput()
 {
 	player->useDefault();
+}
+
+//Set a finished playing callback
+DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingCallback handler)
+{
+	Handler = handler;
 }
 
 

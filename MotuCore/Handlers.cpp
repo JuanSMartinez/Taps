@@ -12,7 +12,7 @@ namespace Handlers
 	//Open the stream
 	bool MotuPlayer::openStream()
 	{
-		playing = true;
+		
 		PaStreamParameters outputParameters;
 
 		outputParameters.device = device;
@@ -65,6 +65,7 @@ namespace Handlers
 			return false;
 		PaError err = Pa_CloseStream(stream);
 		stream = 0;
+		playing = false;
 		return err == paNoError;
 	}
 
@@ -81,6 +82,7 @@ namespace Handlers
 		if (stream == 0)
 			return false;
 		PaError err = Pa_StartStream(stream);
+		playing = true;
 		return err == paNoError;
 	}
 
@@ -92,7 +94,7 @@ namespace Handlers
 			return false;
 
 		PaError err = Pa_StopStream(stream);
-
+		
 		return err == paNoError;
 	}
 
@@ -108,6 +110,11 @@ namespace Handlers
 		matrix_row_index = 0;
 		channels = 24;
 		use_motu = true;
+		
+		//This initialization will take a lot of time
+		for (int k = 0; k < PHONEMES; k++) {
+			phonemes[k] = new Phoneme(k);
+		}
 
 		int i;
 		for (i = 0; i < SINE_TABLE_SIZE; i++)
@@ -214,7 +221,8 @@ namespace Handlers
 	void  MotuPlayer::setPhonemeIndex(int phonemeToPlay)
 	{
 		phoneme_index = phonemeToPlay;
-		phoneme_to_play = new Phoneme(phoneme_index);
+		//phoneme_to_play = new Phoneme(phoneme_index);
+		phoneme_to_play = phonemes[phoneme_index];
 		dynamic_table_height = phoneme_to_play->getNumberOfRows();
 	}
 

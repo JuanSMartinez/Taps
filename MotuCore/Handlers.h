@@ -3,6 +3,7 @@
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER (64)
 #define SINE_TABLE_SIZE (200)
+#define PHONEMES (49)
 
 #ifndef M_PI
 #define M_PI (3.14159265)
@@ -89,7 +90,8 @@ namespace Handlers
 		PaDeviceIndex device;
 		Phoneme* phoneme_to_play;
 		float* arbitraryMatrix;
-		
+		Phoneme* phonemes[PHONEMES];
+
 		float sineData[SINE_TABLE_SIZE];
 		int sineDataIndex;
 		
