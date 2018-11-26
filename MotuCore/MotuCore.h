@@ -33,6 +33,9 @@ extern "C"
 
 	//Set a finished playing callback
 	DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingCallback handler);
+
+	//Initialization finished
+	DLLEXPORT bool initializationFinished();
 }
 
 

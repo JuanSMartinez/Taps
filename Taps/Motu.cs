@@ -19,7 +19,7 @@ namespace Taps
         private static readonly object lockObject = new object();
 
         //Finished playing callback delegate
-        private delegate void FinishedPlayingCallback(int result);
+        public delegate void FinishedPlayingCallback(int result);
         private FinishedPlayingCallback callbackInstance;
 
         //Initialization flag
@@ -44,6 +44,8 @@ namespace Taps
         static extern void useDefaultOutput();
         [DllImport("MotuCore")]
         static extern void setFinishedPlayingCallback(FinishedPlayingCallback callback);
+        [DllImport("MotuCore")]
+        static extern bool initializationFinished();
 
         //Phoneme dictionary
         private static Dictionary<string, int> phonemeList = new Dictionary<string, int>(){
@@ -98,6 +100,9 @@ namespace Taps
             { "Y&OO", 48}
         };
 
+        //Flite phoneme mapping
+        private Dictionary<string, string> fliteMapping;
+
         //Path to cygwin with flite compiled and installed
         public string CygwinPath
         {
@@ -111,8 +116,8 @@ namespace Taps
             Thread initilializationThred = new Thread(new ThreadStart(Initialize));
             initilializationThred.Start();
             CygwinPath = "C:\\cygwin64\\bin\\flite.exe";
-            callbackInstance = new FinishedPlayingCallback(CallbackHandler);
-            setFinishedPlayingCallback(callbackInstance);
+            InitializeMapping();
+            
         }
 
         //Instance as a property
@@ -133,7 +138,70 @@ namespace Taps
         private void Initialize()
         {
             createStructures();
+            while (!initializationFinished()) ;
+            callbackInstance = new FinishedPlayingCallback(CallbackHandler);
+            setFinishedPlayingCallback(callbackInstance);
             Initialized = true;
+        }
+
+        //Initialize flite mapping
+        private void InitializeMapping()
+        {
+            fliteMapping = new Dictionary<string, string>();
+
+            fliteMapping.Add("aa", "UH");
+            fliteMapping.Add("ae", "AE");
+            fliteMapping.Add("ah", "AH");
+            fliteMapping.Add("ao", "AW");
+            fliteMapping.Add("aw", "OW");
+            fliteMapping.Add("ax", "UH");
+            fliteMapping.Add("ay", "I");
+            fliteMapping.Add("eh", "EH");
+            fliteMapping.Add("el", "UH-L");
+            fliteMapping.Add("em", "UH-M");
+            fliteMapping.Add("en", "UH-N");
+            fliteMapping.Add("er", "ER");
+            fliteMapping.Add("ey", "AY");
+            fliteMapping.Add("ih", "IH");
+            fliteMapping.Add("iy", "EE");
+            fliteMapping.Add("ow", "OE");
+            fliteMapping.Add("oy", "OY");
+            fliteMapping.Add("uh", "UU");
+            fliteMapping.Add("uw", "OO");
+            fliteMapping.Add("b", "B");
+            fliteMapping.Add("ch", "CH");
+            fliteMapping.Add("d", "D");
+            fliteMapping.Add("dh", "DH");
+            fliteMapping.Add("f", "F");
+            fliteMapping.Add("g", "G");
+            fliteMapping.Add("hh", "H");
+            fliteMapping.Add("jh", "J");
+            fliteMapping.Add("k", "K");
+            fliteMapping.Add("l", "L");
+            fliteMapping.Add("m", "M");
+            fliteMapping.Add("n", "N");
+            fliteMapping.Add("ng", "NG");
+            fliteMapping.Add("p", "P");
+            fliteMapping.Add("r", "R");
+            fliteMapping.Add("s", "S");
+            fliteMapping.Add("sh", "SH");
+            fliteMapping.Add("t", "T");
+            fliteMapping.Add("th", "TH");
+            fliteMapping.Add("v", "V");
+            fliteMapping.Add("w", "W");
+            fliteMapping.Add("y", "Y");
+            fliteMapping.Add("z", "Z");
+            fliteMapping.Add("zh", "ZH");
+        }
+
+        //Get a phoneme translation
+        public string GetPhonemeTranslationFromFlite(string flitePhoneme)
+        {
+            string result;
+            if (fliteMapping.TryGetValue(flitePhoneme, out result))
+                return result;
+            else
+                return "";
         }
 
         //Is MOTU initialized
@@ -142,6 +210,12 @@ namespace Taps
             return Initialized;
         }
         
+        //Set external callback
+        public void SetPlayingCallback(FinishedPlayingCallback externalCallbackInstance)
+        {
+            if(Initialized)
+                setFinishedPlayingCallback(externalCallbackInstance);
+        }
 
         //Set normal playing finished callback 
         public void SetDefaultCallback()
@@ -236,7 +310,69 @@ namespace Taps
             thread.Start();
         }
 
-        //Sentence playin thread
+        //Get string sequence of phonemes of a text using flite
+        public string[] GetFlitePhonemeSequenceOf(string sentence)
+        {
+            Process process = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+
+            startInfo.FileName = Instance.CygwinPath;
+            startInfo.Arguments = "/c -t \"" + sentence + "\" -ps -o none";
+            process.StartInfo = startInfo;
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            string[] phonemeSequence = output.Split(' ');
+            string[] result = new string[phonemeSequence.Length - 2];
+            for (int i = 0; i < phonemeSequence.Length; ++i)
+            {
+                if (i != 0 && i != phonemeSequence.Length - 1)
+                    result[i - 1] = phonemeSequence[i];
+            }
+            return result;
+        }
+
+        //Get the string phoneme sequence of a sentence
+        public string GetPhonemesOfSentence(string sentence)
+        {
+            string[] words = sentence.Split(' ');
+            string result = "";
+            foreach (string word in words)
+            {
+                string formattedWord = new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
+                if (formattedWord != null && !formattedWord.Equals(""))
+                {
+                    string[] phonemes = GetFlitePhonemeSequenceOf(formattedWord);
+                    foreach (string phoneme in phonemes)
+                    {
+                        string phonemeLabel = Instance.GetPhonemeTranslationFromFlite(phoneme);
+                        if (!phonemeLabel.Equals(""))
+                        {
+                            if (phonemeLabel.Contains("-"))
+                            {
+                                string[] pair = phonemeLabel.Split('-');
+                                result += pair[0] + "," + pair[1] + ",";
+                            }
+                            else
+                            {
+                                result += phonemeLabel + ",";
+                            }
+
+                        }
+                    }
+                }
+                result += "PAUSE" + ",";
+            }
+            return result;
+
+           
+        }
+
+
+
+        //Sentence playing thread
         internal class SentencePlayingThread
         {
             private Thread _thread;
@@ -249,8 +385,6 @@ namespace Taps
 
             private FinishedPlayingCallback syncCallbackInstance;
 
-            private Dictionary<string, string> fliteMapping;
-
             public SentencePlayingThread(int ici, int iwi, string sentence)
             {
                 ICI = ici;
@@ -259,57 +393,7 @@ namespace Taps
                 syncCallbackInstance = new FinishedPlayingCallback(CallbackHandler);
                 setFinishedPlayingCallback(syncCallbackInstance);
                 queue = new Queue<QueuedElement>();
-                InitializeMapping();
 
-            }
-
-            private void InitializeMapping()
-            {
-                fliteMapping = new Dictionary<string, string>();
-
-                fliteMapping.Add("aa", "UH");
-                fliteMapping.Add("ae", "AE");
-                fliteMapping.Add("ah", "AH");
-                fliteMapping.Add("ao", "AW");
-                fliteMapping.Add("aw", "OW");
-                fliteMapping.Add("ax", "UH");
-                fliteMapping.Add("ay", "I");
-                fliteMapping.Add("eh", "EH");
-                fliteMapping.Add("el", "UH-L");
-                fliteMapping.Add("em", "UH-M");
-                fliteMapping.Add("en", "UH-N");
-                fliteMapping.Add("er", "ER");
-                fliteMapping.Add("ey", "AY");
-                fliteMapping.Add("ih", "IH");
-                fliteMapping.Add("iy", "EE");
-                fliteMapping.Add("ow", "OE");
-                fliteMapping.Add("oy", "OY");
-                fliteMapping.Add("uh", "UU");
-                fliteMapping.Add("uw", "OO");
-                fliteMapping.Add("b", "B");
-                fliteMapping.Add("ch", "CH");
-                fliteMapping.Add("d", "D");
-                fliteMapping.Add("dh", "DH");
-                fliteMapping.Add("f", "F");
-                fliteMapping.Add("g", "G");
-                fliteMapping.Add("hh", "H");
-                fliteMapping.Add("jh", "J");
-                fliteMapping.Add("k", "K");
-                fliteMapping.Add("l", "L");
-                fliteMapping.Add("m", "M");
-                fliteMapping.Add("n", "N");
-                fliteMapping.Add("ng", "NG");
-                fliteMapping.Add("p", "P");
-                fliteMapping.Add("r", "R");
-                fliteMapping.Add("s", "S");
-                fliteMapping.Add("sh", "SH");
-                fliteMapping.Add("t", "T");
-                fliteMapping.Add("th", "TH");
-                fliteMapping.Add("v", "V");
-                fliteMapping.Add("w", "W");
-                fliteMapping.Add("y", "Y");
-                fliteMapping.Add("z", "Z");
-                fliteMapping.Add("zh", "ZH");
             }
 
             public void Start()
@@ -327,38 +411,27 @@ namespace Taps
                     string formattedWord = new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
                     if(formattedWord != null && !formattedWord.Equals(""))
                     {
-                        string[] phonemes = GetPhonemeSequenceOf(formattedWord);
+                        string[] phonemes = Instance.GetFlitePhonemeSequenceOf(formattedWord);
                         foreach(string phoneme in phonemes)
                         {
-                            string phonemeLabel;
-                            if(fliteMapping.TryGetValue(phoneme, out phonemeLabel))
+                            string phonemeLabel = Instance.GetPhonemeTranslationFromFlite(phoneme);
+                            if(!phonemeLabel.Equals(""))
                             {
                                 if (phonemeLabel.Contains("-"))
                                 {
                                     string[] pair = phonemeLabel.Split('-');
                                     queue.Enqueue(new QueuedElement(pair[0], QueuedElement.types.phoneme));
-                                    //Instance.PlayPhoneme(pair[0]);
-                                    //Console.WriteLine(pair[0]);
-                                    //Thread.Sleep(ICI);
-
                                     queue.Enqueue(new QueuedElement(pair[1], QueuedElement.types.phoneme));
-                                    //Instance.PlayPhoneme(pair[1]);
-                                    //Console.WriteLine(pair[1]);
-                                    //Thread.Sleep(ICI);
                                 }
                                 else
                                 {
                                     queue.Enqueue(new QueuedElement(phonemeLabel, QueuedElement.types.phoneme));
-                                    //Instance.PlayPhoneme(phonemeLabel);
-                                    //Console.WriteLine(phonemeLabel);
-                                    //Thread.Sleep(ICI);
                                 }
                                 
                             }
                         }
                     }
                     queue.Enqueue(new QueuedElement("Pause", QueuedElement.types.wordPause));
-                    //Thread.Sleep(IWI);
                 }
 
                 try
@@ -377,30 +450,6 @@ namespace Taps
                 {
                     Console.WriteLine("Queue empty before starting");
                 }
-            }
-
-            //Get string sequence of phonemes of a text using flite
-            private string[] GetPhonemeSequenceOf(string sentence)
-            {
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = true;
-              
-                startInfo.FileName = Instance.CygwinPath;
-                startInfo.Arguments = "/c -t \"" + sentence + "\" -ps -o none";
-                process.StartInfo = startInfo;
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-                string[] phonemeSequence = output.Split(' ');
-                string[] result = new string[phonemeSequence.Length - 2];
-                for (int i = 0; i < phonemeSequence.Length; ++i)
-                {
-                    if (i != 0 && i != phonemeSequence.Length - 1)
-                        result[i-1] = phonemeSequence[i];
-                }
-                return result;
             }
 
             private void CallbackHandler(int result)

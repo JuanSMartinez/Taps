@@ -15,6 +15,8 @@
 #include <mutex>
 #include <string>
 #include "Phoneme.h"
+#include <thread>
+#include <atomic>
 
 namespace Handlers
 {
@@ -27,6 +29,9 @@ namespace Handlers
 
 		//Constructor
 		MotuPlayer();
+
+		//Destructor
+		~MotuPlayer();
 
 		//Open the stream
 		bool openStream();
@@ -76,6 +81,9 @@ namespace Handlers
 		//use the default output as playback device
 		void useDefault();
 
+		//Is the initialization complete
+		bool initializationFinished();
+
 	private:
 		playModes mode;
 		PaStream *stream;
@@ -90,7 +98,7 @@ namespace Handlers
 		PaDeviceIndex device;
 		Phoneme* phoneme_to_play;
 		float* arbitraryMatrix;
-		Phoneme* phonemes[PHONEMES];
+		Phoneme* phonemes;
 
 		float sineData[SINE_TABLE_SIZE];
 		int sineDataIndex;

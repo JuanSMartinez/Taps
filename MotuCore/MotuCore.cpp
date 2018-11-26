@@ -95,6 +95,7 @@ void AsyncMatrixPlay(void*)
 {
 	if (mutex->try_lock())
 	{
+		player->changePlayMode(Handlers::MotuPlayer::matrix);
 		PaError initResult = Pa_Initialize();
 		if (initResult != paNoError) goto error;
 		if (player->isUsingMotu())
@@ -147,7 +148,7 @@ DLLEXPORT void play(int phonemeCode)
 //Play a specific matrix 
 DLLEXPORT void playMatrix(float* matrix, int width, int height)
 {
-	player->changePlayMode(Handlers::MotuPlayer::matrix);
+	
 	player->setArbitraryMatrixParameters(matrix, width, height);
 	_beginthread(AsyncMatrixPlay, 0, NULL);
 
@@ -189,6 +190,12 @@ DLLEXPORT void useDefaultOutput()
 DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingCallback handler)
 {
 	Handler = handler;
+}
+
+//Initialization finished
+DLLEXPORT bool initializationFinished()
+{
+	return player->initializationFinished();
 }
 
 

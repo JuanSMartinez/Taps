@@ -41,10 +41,14 @@ namespace SandBox
             Program prog = new Program();
 
             Console.WriteLine("Using singleton");
+            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
             Motu instance = Motu.Instance;
-            Console.WriteLine("Waiting for initialization ...");
-            while (!instance.IsInitialized()) ;
-            Console.WriteLine("Done");
+            //Console.WriteLine("Waiting for initialization ...");
+            //while (!instance.IsInitialized()) ;
+            //stopwatch.Stop();
+            //long timeMs = stopwatch.ElapsedMilliseconds;
+            //Console.WriteLine("Done after " + timeMs + " ms");
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -56,13 +60,21 @@ namespace SandBox
             //Console.WriteLine("Calling Flite");
             //Console.WriteLine(instance.GetPhonemeSequenceOf("Hello world. New sentence with a lot of characters to translate"));
 
-            string testing = "flame";
-            instance.PlaySentence(testing, 400, 100);
-
+            //string testing = "flame";
+            //instance.PlaySentence(testing, 75, 500);
+            //Console.WriteLine("Next word: ");
+            //testing = Console.ReadLine();
+            //instance.PlaySentence(testing, 200, 1000);
             //instance.PlayPhoneme("IH&NG");
             //instance.PlayPhoneme("P");
             //instance.PlayPhoneme("L");
-            Console.Read();
+            while (true)
+            {
+                Console.WriteLine("Word to translate: ");
+                string testing = Console.ReadLine();
+                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+                
+            }
         }
     }
 }

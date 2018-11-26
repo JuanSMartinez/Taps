@@ -2,11 +2,25 @@
 
 namespace Handlers
 {
+	std::atomic<int> threadsFinished = 0;
+	void initializePhoneme(Phoneme* phonemeArray, int index)
+	{
+		phonemeArray[index] = *(new Phoneme(index));
+		threadsFinished++;
+
+	}
+
 	//Constructor
 	MotuPlayer::MotuPlayer()
 		:stream(0)
 	{
 		initializeData();
+	}
+
+	//Destructor
+	MotuPlayer::~MotuPlayer()
+	{
+		delete phonemes;
 	}
 
 	//Open the stream
@@ -110,10 +124,11 @@ namespace Handlers
 		matrix_row_index = 0;
 		channels = 24;
 		use_motu = true;
-		
+		phonemes = (Phoneme*)malloc(PHONEMES * sizeof(Phoneme));
 		//This initialization will take a lot of time
 		for (int k = 0; k < PHONEMES; k++) {
-			phonemes[k] = new Phoneme(k);
+			std::thread phonemeInitThread(initializePhoneme, phonemes, k);
+			phonemeInitThread.detach();
 		}
 
 		int i;
@@ -124,6 +139,13 @@ namespace Handlers
 		sineDataIndex = 0;
 
 	}
+
+	//Initialization finished
+	bool MotuPlayer::initializationFinished()
+	{
+		return threadsFinished == PHONEMES;
+	}
+
 
 	//Get Motu Index
 	bool MotuPlayer::setMOTU() {
@@ -221,8 +243,8 @@ namespace Handlers
 	void  MotuPlayer::setPhonemeIndex(int phonemeToPlay)
 	{
 		phoneme_index = phonemeToPlay;
-		//phoneme_to_play = new Phoneme(phoneme_index);
-		phoneme_to_play = phonemes[phoneme_index];
+		phoneme_to_play = &phonemes[phoneme_index];
+		//phoneme_to_play = new Phoneme(phonemeToPlay);
 		dynamic_table_height = phoneme_to_play->getNumberOfRows();
 	}
 
