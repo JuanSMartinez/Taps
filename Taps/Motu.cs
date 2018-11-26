@@ -365,7 +365,7 @@ namespace Taps
                 }
                 result += "PAUSE" + ",";
             }
-            return result;
+            return result.Substring(0,result.Length-7);
 
            
         }
