@@ -7,7 +7,7 @@ This repository consists of a Microsoft Visual Studio Solution with 3 internal p
 2. MotuCore
 3. SandBox
 
-These projects are meant to communicate C# applications with a MOTU audio interface (model Ao24). The software relies on the usage of the compiled .dll version of the [PortAudio](http://www.portaudio.com/) for x64 machines and a folder named "Phonemes" for playing the 49 haptic signals mapped to 39 English phonemes and 10 extra abbreviations of the most frequent pairs of phonemes in English. The folder must contain 49 .CSV files correctly named after the phoneme naming convention in the project. 
+These projects are meant to communicate C# applications with a MOTU audio interface (model Ao24). The software relies on the usage of the compiled .dll version of the [PortAudio](http://www.portaudio.com/) for x64 machines and a folder named "Phonemes" for playing the 49 haptic signals mapped to 39 English phonemes and 10 extra abbreviations of the most frequent pairs of phonemes in English. The folder must contain 49 .CSV files correctly named after the phoneme naming convention in the project. This files are generated externally in MATLAB and require other MATLAB software that uses threshold measurements and adjustment settings for a specific participant.
 
 ## Taps
 
