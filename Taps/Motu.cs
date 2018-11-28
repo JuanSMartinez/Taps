@@ -220,7 +220,8 @@ namespace Taps
         //Set normal playing finished callback 
         public void SetDefaultCallback()
         {
-            setFinishedPlayingCallback(callbackInstance);
+            if(Initialized)
+                setFinishedPlayingCallback(callbackInstance);
         }
 
         //Finished playing callback handler
@@ -249,7 +250,7 @@ namespace Taps
         //Play phoneme by code
         public void PlayPhonemeByCode(int code)
         {
-            if(code >= 0 && code < phonemeList.Count && Initialized)
+            if(Initialized && code >= 0 && code < phonemeList.Count)
                 play(code);
         }
 

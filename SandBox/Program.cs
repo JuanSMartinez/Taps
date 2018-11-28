@@ -44,11 +44,11 @@ namespace SandBox
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
             Motu instance = Motu.Instance;
-            //Console.WriteLine("Waiting for initialization ...");
-            //while (!instance.IsInitialized()) ;
-            //stopwatch.Stop();
-            //long timeMs = stopwatch.ElapsedMilliseconds;
-            //Console.WriteLine("Done after " + timeMs + " ms");
+            Console.WriteLine("Waiting for initialization ...");
+            while (!instance.IsInitialized()) ;
+            stopwatch.Stop();
+            long timeMs = stopwatch.ElapsedMilliseconds;
+            Console.WriteLine("Done after " + timeMs + " ms");
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -67,14 +67,15 @@ namespace SandBox
             //instance.PlaySentence(testing, 200, 1000);
             //instance.PlayPhoneme("IH&NG");
             //instance.PlayPhoneme("P");
-            //instance.PlayPhoneme("L");
-            while (true)
-            {
-                Console.WriteLine("Word to translate: ");
-                string testing = Console.ReadLine();
-                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
-                
-            }
+            instance.PlayPhoneme("L");
+            //while (true)
+            //{
+            //    Console.WriteLine("Word to translate: ");
+            //    string testing = Console.ReadLine();
+            //    Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+
+            //}
+            Console.Read();
         }
     }
 }

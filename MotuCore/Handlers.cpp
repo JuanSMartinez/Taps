@@ -7,7 +7,23 @@ namespace Handlers
 	{
 		phonemeArray[index] = *(new Phoneme(index));
 		threadsFinished++;
+	}
+	
+	void initializeAllPhonemes(Phoneme* phonemeArray)
+	{
+		for (int k = 0; k < PHONEMES; k++) {
+			phonemeArray[k] = *(new Phoneme(k));
+			threadsFinished++;
+		}
+	}
 
+	void initializeSubsetOfPhonemes(Phoneme* phonemeArray, int min, int max)
+	{
+		for (int i = min; i <= max; ++i)
+		{
+			phonemeArray[i] = *(new Phoneme(i));
+			threadsFinished++;
+		}
 	}
 
 	//Constructor
@@ -125,9 +141,21 @@ namespace Handlers
 		channels = 24;
 		use_motu = true;
 		phonemes = (Phoneme*)malloc(PHONEMES * sizeof(Phoneme));
-		//This initialization will take a lot of time
-		for (int k = 0; k < PHONEMES; k++) {
-			std::thread phonemeInitThread(initializePhoneme, phonemes, k);
+		////This initialization will take a lot of time
+		//for (int k = 0; k < PHONEMES; k++) {
+		//	std::thread phonemeInitThread(initializePhoneme, phonemes, k);
+		//	phonemeInitThread.detach();
+		//}
+
+		//std::thread phonemeInitThread(initializeAllPhonemes, phonemes);
+		//phonemeInitThread.detach();
+
+		int setSize = PHONEMES / INIT_THREADS;
+		for (int k = 0; k < INIT_THREADS; ++k)
+		{
+			int min = k * (setSize + 1);
+			int max = min + setSize > PHONEMES-1 ? PHONEMES-1 : min + setSize;
+			std::thread phonemeInitThread(initializeSubsetOfPhonemes, phonemes, min, max);
 			phonemeInitThread.detach();
 		}
 
@@ -144,6 +172,7 @@ namespace Handlers
 	bool MotuPlayer::initializationFinished()
 	{
 		return threadsFinished == PHONEMES;
+		//return true;
 	}
 
 
