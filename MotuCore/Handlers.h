@@ -4,7 +4,7 @@
 #define FRAMES_PER_BUFFER (64)
 #define SINE_TABLE_SIZE (200)
 #define PHONEMES (49)
-#define INIT_THREADS (10)
+#define INIT_THREADS (49)
 
 #ifndef M_PI
 #define M_PI (3.14159265)

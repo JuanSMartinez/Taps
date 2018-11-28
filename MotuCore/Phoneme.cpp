@@ -51,7 +51,8 @@ void Phoneme::initializeData(){
     //Allocate memory for the data structure
     size_t rows = vector.size();
     int cols = 24;
-    data->matrix = (float*)calloc(rows*cols, sizeof(float));
+    //data->matrix = (float*)calloc(rows*cols, sizeof(float));
+	data->matrix = (float*)malloc(rows*cols*sizeof(float));
     data->rows = (int)rows;
 	duration = ((float)rows / SAMPLE_RATE) * 1000;
     

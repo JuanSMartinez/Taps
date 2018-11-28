@@ -67,15 +67,16 @@ namespace SandBox
             //instance.PlaySentence(testing, 200, 1000);
             //instance.PlayPhoneme("IH&NG");
             //instance.PlayPhoneme("P");
-            instance.PlayPhoneme("L");
-            //while (true)
-            //{
-            //    Console.WriteLine("Word to translate: ");
-            //    string testing = Console.ReadLine();
-            //    Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+            //instance.PlayPhoneme("OO");
+            while (true)
+            {
+                Console.WriteLine("Word to translate: ");
+                string testing = Console.ReadLine();
+                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+                instance.PlaySentence(testing, 500, 1000);
 
-            //}
-            Console.Read();
+            }
+
         }
     }
 }

@@ -134,23 +134,26 @@ error:
 /*Test a sine wave in all 24 channels*/
 DLLEXPORT void testPlay()
 {
-	
-	_beginthread(AsyncSinePlay, 0, NULL);
+	if(player->initializationFinished())
+		_beginthread(AsyncSinePlay, 0, NULL);
 
 }
 
 DLLEXPORT void play(int phonemeCode)
 {
-	_beginthread(AsyncPhonemePlay, 0, (void*)phonemeCode);
+	if (player->initializationFinished())
+		_beginthread(AsyncPhonemePlay, 0, (void*)phonemeCode);
 	
 }
 
 //Play a specific matrix 
 DLLEXPORT void playMatrix(float* matrix, int width, int height)
 {
-	
-	player->setArbitraryMatrixParameters(matrix, width, height);
-	_beginthread(AsyncMatrixPlay, 0, NULL);
+	if (player->initializationFinished())
+	{
+		player->setArbitraryMatrixParameters(matrix, width, height);
+		_beginthread(AsyncMatrixPlay, 0, NULL);
+	}
 
 }
 
