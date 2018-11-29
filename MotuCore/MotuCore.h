@@ -36,6 +36,9 @@ extern "C"
 
 	//Initialization finished
 	DLLEXPORT bool initializationFinished();
+
+	//Clear all data
+	DLLEXPORT void clearAll();
 }
 
 

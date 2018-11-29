@@ -72,11 +72,15 @@ namespace SandBox
             {
                 Console.WriteLine("Word to translate: ");
                 string testing = Console.ReadLine();
+                
                 Console.WriteLine(instance.GetPhonemesOfSentence(testing));
                 instance.PlaySentence(testing, 500, 1000);
-
+                if (testing.Equals("QUIT"))
+                    break;
             }
-
+            instance.Dispose();
+            Console.WriteLine("Memory disposed");
+            Console.Read();
         }
     }
 }

@@ -36,6 +36,9 @@ std::string Phoneme::getPathToDataFile(){
 }
 
 void Phoneme::initializeData(){
+
+	data = new phonemeData;
+
     //Read the corresponding csv file for the phoneme
     std::string filePath = getPathToDataFile();
     std::vector<std::string> vector;
@@ -51,8 +54,8 @@ void Phoneme::initializeData(){
     //Allocate memory for the data structure
     size_t rows = vector.size();
     int cols = 24;
-    //data->matrix = (float*)calloc(rows*cols, sizeof(float));
-	data->matrix = (float*)malloc(rows*cols*sizeof(float));
+    data->matrix = (float*)calloc(rows*cols, sizeof(float));
+	//data->matrix = (float*)malloc(rows*cols*sizeof(float));
     data->rows = (int)rows;
 	duration = ((float)rows / SAMPLE_RATE) * 1000;
     
@@ -86,14 +89,18 @@ int Phoneme::getPhonemeDuration() {
 	return duration;
 }
 
+void Phoneme::setCode(int code)
+{
+	phonemeCode = code;
+}
+
 Phoneme::Phoneme(int code){
     phonemeCode = code;
-    data = new phonemeData;
     initializeData();
 }
 
 Phoneme::~Phoneme(){
-    free((void *)data->matrix);
+    free(data->matrix);
     delete data;
 }
 

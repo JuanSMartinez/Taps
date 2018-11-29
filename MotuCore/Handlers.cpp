@@ -3,25 +3,14 @@
 namespace Handlers
 {
 	std::atomic<int> threadsFinished = 0;
-	void initializePhoneme(Phoneme* phonemeArray, int index)
-	{
-		phonemeArray[index] = *(new Phoneme(index));
-		threadsFinished++;
-	}
-	
-	void initializeAllPhonemes(Phoneme* phonemeArray)
-	{
-		for (int k = 0; k < PHONEMES; k++) {
-			phonemeArray[k] = *(new Phoneme(k));
-			threadsFinished++;
-		}
-	}
 
 	void initializeSubsetOfPhonemes(Phoneme* phonemeArray, int min, int max)
 	{
 		for (int i = min; i <= max; ++i)
 		{
-			phonemeArray[i] = *(new Phoneme(i));
+			//phonemeArray[i] = *(new Phoneme(i));
+			phonemeArray[i].setCode(i);
+			phonemeArray[i].initializeData();
 			threadsFinished++;
 		}
 	}
@@ -36,7 +25,8 @@ namespace Handlers
 	//Destructor
 	MotuPlayer::~MotuPlayer()
 	{
-		delete phonemes;
+		delete[] phonemes;
+		//free( phonemes);
 	}
 
 	//Open the stream
@@ -140,16 +130,9 @@ namespace Handlers
 		matrix_row_index = 0;
 		channels = 24;
 		use_motu = true;
-		phonemes = (Phoneme*)malloc(PHONEMES * sizeof(Phoneme));
-		////This initialization will take a lot of time
-		//for (int k = 0; k < PHONEMES; k++) {
-		//	std::thread phonemeInitThread(initializePhoneme, phonemes, k);
-		//	phonemeInitThread.detach();
-		//}
-
-		//std::thread phonemeInitThread(initializeAllPhonemes, phonemes);
-		//phonemeInitThread.detach();
-
+		//phonemes = (Phoneme*)malloc(PHONEMES * sizeof(Phoneme));
+		phonemes = new Phoneme[PHONEMES];
+		
 		int setSize = PHONEMES / INIT_THREADS;
 		for (int k = 0; k < INIT_THREADS; ++k)
 		{

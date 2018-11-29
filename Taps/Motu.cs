@@ -46,6 +46,8 @@ namespace Taps
         static extern void setFinishedPlayingCallback(FinishedPlayingCallback callback);
         [DllImport("MotuCore")]
         static extern bool initializationFinished();
+        [DllImport("MotuCore")]
+        static extern void clearAll();
 
         //Phoneme dictionary
         private static Dictionary<string, int> phonemeList = new Dictionary<string, int>(){
@@ -371,7 +373,12 @@ namespace Taps
            
         }
 
-
+        //Clear all the data initialized
+        public void Dispose()
+        {
+            if (Initialized)
+                clearAll();
+        }
 
         //Sentence playing thread
         internal class SentencePlayingThread

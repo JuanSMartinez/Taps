@@ -4,7 +4,7 @@
 #define FRAMES_PER_BUFFER (64)
 #define SINE_TABLE_SIZE (200)
 #define PHONEMES (49)
-#define INIT_THREADS (49)
+#define INIT_THREADS (10)
 
 #ifndef M_PI
 #define M_PI (3.14159265)
@@ -100,6 +100,7 @@ namespace Handlers
 		Phoneme* phoneme_to_play;
 		float* arbitraryMatrix;
 		Phoneme* phonemes;
+
 
 		float sineData[SINE_TABLE_SIZE];
 		int sineDataIndex;

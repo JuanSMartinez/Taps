@@ -23,16 +23,19 @@ typedef struct{
 
 class Phoneme{
 public:
+	Phoneme() {};
     Phoneme(int code);
     ~Phoneme();
     float valueAt(int i, int j);
     int getPhonemeCode();
     size_t getNumberOfRows();
 	int getPhonemeDuration();
+	void setCode(int code);
+	void initializeData();
 private:
     int phonemeCode;
 	int duration;
     phonemeData* data;
     std::string getPathToDataFile();
-    void initializeData();
+    
 };

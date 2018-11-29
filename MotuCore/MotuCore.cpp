@@ -134,14 +134,14 @@ error:
 /*Test a sine wave in all 24 channels*/
 DLLEXPORT void testPlay()
 {
-	if(player->initializationFinished())
+	if(player != NULL && player->initializationFinished())
 		_beginthread(AsyncSinePlay, 0, NULL);
 
 }
 
 DLLEXPORT void play(int phonemeCode)
 {
-	if (player->initializationFinished())
+	if (player != NULL && player->initializationFinished())
 		_beginthread(AsyncPhonemePlay, 0, (void*)phonemeCode);
 	
 }
@@ -149,7 +149,7 @@ DLLEXPORT void play(int phonemeCode)
 //Play a specific matrix 
 DLLEXPORT void playMatrix(float* matrix, int width, int height)
 {
-	if (player->initializationFinished())
+	if (player != NULL && player->initializationFinished())
 	{
 		player->setArbitraryMatrixParameters(matrix, width, height);
 		_beginthread(AsyncMatrixPlay, 0, NULL);
@@ -199,6 +199,15 @@ DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingCallback handler)
 DLLEXPORT bool initializationFinished()
 {
 	return player->initializationFinished();
+}
+
+//Clear all data
+DLLEXPORT void clearAll()
+{
+	delete mutex;
+	delete player;
+	mutex = NULL;
+	player = NULL;
 }
 
 
