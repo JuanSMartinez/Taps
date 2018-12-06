@@ -164,9 +164,12 @@ namespace Handlers
 		const PaDeviceInfo* info;
 		int numDevices = Pa_GetDeviceCount();
 		PaDeviceIndex motu = paNoDevice;
+		std::string motuName("MOTU");
 		for (int i = 0; i < numDevices; i++) {
 			info = Pa_GetDeviceInfo(i);
-			if (info->maxOutputChannels == 24 && std::strcmp(Pa_GetHostApiInfo(info->hostApi)->name, "ASIO") == 0)
+			std::string deviceName(info->name);
+			
+			if (info->maxOutputChannels == 24 && deviceName.find(motuName) != std::string::npos)
 			{
 				motu = i;
 				break;

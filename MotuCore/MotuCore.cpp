@@ -90,6 +90,54 @@ error:
 	_endthread();
 }
 
+void StdAsyncPhonemePlay(int phonemeCode)
+{
+	if (mutex->try_lock())
+	{
+		player->setPhonemeIndex(phonemeCode);
+		player->changePlayMode(Handlers::MotuPlayer::phoneme);
+		PaError initResult = Pa_Initialize();
+		if (initResult != paNoError) {
+			Handler(-1);
+			mutex->unlock();
+			Pa_Terminate();
+			return;
+		}
+		if (player->isUsingMotu())
+		{
+			if (!player->setMOTU()) {
+				Handler(-1);
+				mutex->unlock();
+				Pa_Terminate();
+				return;
+			}
+		}
+		else
+		{
+			if (!player->setDefaultOutput()) {
+				Handler(-1);
+				mutex->unlock();
+				Pa_Terminate();
+				return;
+			}
+		}
+		if (player->openStream())
+		{
+			if (player->startStream())
+			{
+				while (player->isStreamActive());
+				player->stopStream();
+			}
+			player->closeStream();
+		}
+		player->restartControlVariables();
+		Pa_Terminate();
+		mutex->unlock();
+		Handler(0);
+	}
+
+}
+
 
 void AsyncMatrixPlay(void*)
 {
@@ -141,8 +189,11 @@ DLLEXPORT void testPlay()
 
 DLLEXPORT void play(int phonemeCode)
 {
-	if (player != NULL && player->initializationFinished())
-		_beginthread(AsyncPhonemePlay, 0, (void*)phonemeCode);
+	if (player != NULL && player->initializationFinished()) {
+		//_beginthread(AsyncPhonemePlay, 0, (void*)phonemeCode);
+		std::thread playThread(StdAsyncPhonemePlay, phonemeCode);
+		playThread.detach();
+	}
 	
 }
 
