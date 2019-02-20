@@ -29,7 +29,10 @@ void AsyncSinePlay(void*)
 				Pa_Sleep(2000);
 				player->stopStream();
 			}
-			player->closeStream();
+			if (!player->stopStream())
+			{
+				goto error;
+			}
 		}
 		player->restartControlVariables();
 		Pa_Terminate();
@@ -69,7 +72,10 @@ void AsyncPhonemePlay(void* phonemeCode)
 			if (player->startStream())
 			{
 				while (player->isStreamActive());
-				player->stopStream();
+				if (!player->stopStream())
+				{
+					goto error;
+				}
 			}
 			player->closeStream();
 		}
@@ -99,6 +105,7 @@ void StdAsyncPhonemePlay(int phonemeCode)
 		PaError initResult = Pa_Initialize();
 		if (initResult != paNoError) {
 			Handler(-1);
+			player->restartControlVariables();
 			mutex->unlock();
 			Pa_Terminate();
 			return;
@@ -107,6 +114,7 @@ void StdAsyncPhonemePlay(int phonemeCode)
 		{
 			if (!player->setMOTU()) {
 				Handler(-1);
+				player->restartControlVariables();
 				mutex->unlock();
 				Pa_Terminate();
 				return;
@@ -116,6 +124,7 @@ void StdAsyncPhonemePlay(int phonemeCode)
 		{
 			if (!player->setDefaultOutput()) {
 				Handler(-1);
+				player->restartControlVariables();
 				mutex->unlock();
 				Pa_Terminate();
 				return;
@@ -126,9 +135,24 @@ void StdAsyncPhonemePlay(int phonemeCode)
 			if (player->startStream())
 			{
 				while (player->isStreamActive());
-				player->stopStream();
+
+				if (!player->stopStream()) 
+				{
+					Handler(-1);
+					player->restartControlVariables();
+					mutex->unlock();
+					Pa_Terminate();
+					return;
+				}
 			}
-			player->closeStream();
+			if(!player->closeStream())
+			{
+				Handler(-1);
+				player->restartControlVariables();
+				mutex->unlock();
+				Pa_Terminate();
+				return;
+			}
 		}
 		player->restartControlVariables();
 		Pa_Terminate();
@@ -161,7 +185,10 @@ void AsyncMatrixPlay(void*)
 				while (player->isStreamActive());
 				player->stopStream();
 			}
-			player->closeStream();
+			if (!player->stopStream())
+			{
+				goto error;
+			}
 		}
 		player->restartControlVariables();
 		Pa_Terminate();
