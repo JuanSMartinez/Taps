@@ -3,8 +3,8 @@
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER (64)
 #define SINE_TABLE_SIZE (200)
-#define PHONEMES (49)
-#define INIT_THREADS (10)
+#define PHONEMES (50)
+#define INIT_THREADS (15)
 
 #ifndef M_PI
 #define M_PI (3.14159265)

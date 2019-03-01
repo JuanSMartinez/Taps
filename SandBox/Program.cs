@@ -8,6 +8,7 @@ namespace SandBox
 {
     class Program
     {
+        public Motu.FinishedPlayingCallback myCallback;
 
         public void TestMatrixSingleton()
         {
@@ -36,9 +37,16 @@ namespace SandBox
           
         }
 
+        public void Callback(int r)
+        {
+            Console.WriteLine("Result " + r);
+        }
+
         static void Main(string[] args)
         {
+            
             Program prog = new Program();
+            prog.myCallback = new Motu.FinishedPlayingCallback(prog.Callback);
 
             Console.WriteLine("Using singleton");
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
@@ -49,6 +57,7 @@ namespace SandBox
             stopwatch.Stop();
             long timeMs = stopwatch.ElapsedMilliseconds;
             Console.WriteLine("Done after " + timeMs + " ms");
+            Motu.Instance.SetPlayingCallback(prog.Callback);
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -67,9 +76,9 @@ namespace SandBox
             //instance.PlaySentence(testing, 200, 1000);
             //instance.PlayPhoneme("IH&NG");
             //instance.PlayPhoneme("P");
-            //instance.PlayPhoneme("OO");
+            instance.PlayPhoneme("KNOCK");
 
-            instance.TestPlay();
+            //instance.PlaySequenceOfPhonemes(new string[] { "M", "OO", "S", "D"}, 150);
 
             //while (true)
             //{
