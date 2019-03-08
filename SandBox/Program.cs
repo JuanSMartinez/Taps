@@ -8,7 +8,7 @@ namespace SandBox
 {
     class Program
     {
-        public Motu.FinishedPlayingCallback myCallback;
+        public Motu.FinishedPlayingPhonemeCallback myCallback;
 
         public void TestMatrixSingleton()
         {
@@ -39,14 +39,19 @@ namespace SandBox
 
         public void Callback(int r)
         {
-            Console.WriteLine("Result " + r);
+            Console.WriteLine("Played phoneme with Result " + r);
+        }
+
+        public void SentenceCallback(int r)
+        {
+            Console.WriteLine("Played a sentence with result: " + r);
         }
 
         static void Main(string[] args)
         {
             
             Program prog = new Program();
-            prog.myCallback = new Motu.FinishedPlayingCallback(prog.Callback);
+            prog.myCallback = new Motu.FinishedPlayingPhonemeCallback(prog.Callback);
 
             Console.WriteLine("Using singleton");
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
@@ -57,7 +62,8 @@ namespace SandBox
             stopwatch.Stop();
             long timeMs = stopwatch.ElapsedMilliseconds;
             Console.WriteLine("Done after " + timeMs + " ms");
-            Motu.Instance.SetPlayingCallback(prog.Callback);
+            Motu.Instance.SetPhonemePlayingCallback(prog.Callback);
+            Motu.Instance.SetSentencePlayingCallback(prog.SentenceCallback);
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -76,23 +82,23 @@ namespace SandBox
             //instance.PlaySentence(testing, 200, 1000);
             //instance.PlayPhoneme("IH&NG");
             //instance.PlayPhoneme("P");
-            instance.PlayPhoneme("KNOCK");
+            //instance.PlayPhoneme("KNOCK");
 
             //instance.PlaySequenceOfPhonemes(new string[] { "M", "OO", "S", "D"}, 150);
 
-            //while (true)
-            //{
-            //    Console.WriteLine("Sentence to translate: ");
-            //    string testing = Console.ReadLine();
+            while (true)
+            {
+                Console.WriteLine("Sentence to translate: ");
+                string testing = Console.ReadLine();
 
-            //    Console.WriteLine(instance.GetPhonemesOfSentence(testing));
-            //    instance.PlaySentence(testing, 500, 1000);
-            //    if (testing.Equals("QUIT"))
-            //        break;
-            //}
-            //instance.Dispose();
-            //Console.WriteLine("Memory disposed");
-            Console.Read();
+                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+                instance.PlaySentence(testing, 150, 300, true);
+                if (testing.Equals("QUIT"))
+                    break;
+            }
+            instance.Dispose();
+            Console.WriteLine("Memory disposed");
+            //Console.Read();
         }
     }
 }

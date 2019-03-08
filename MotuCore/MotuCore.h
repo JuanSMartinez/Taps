@@ -3,7 +3,7 @@
 
 #define DLLEXPORT _declspec(dllexport)
 
-typedef void(__stdcall * FinishedPlayingCallback)(int result);
+typedef void(__stdcall * FinishedPlayingPhonemeCallback)(int result);
 
 extern "C"
 {
@@ -32,7 +32,7 @@ extern "C"
 	DLLEXPORT void useDefaultOutput();
 
 	//Set a finished playing callback
-	DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingCallback handler);
+	DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingPhonemeCallback handler);
 
 	//Initialization finished
 	DLLEXPORT bool initializationFinished();

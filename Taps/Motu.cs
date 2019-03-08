@@ -19,9 +19,14 @@ namespace Taps
         private static readonly object lockObject = new object();
 
         //Finished playing callback delegate
-        public delegate void FinishedPlayingCallback(int result);
-        private FinishedPlayingCallback callbackInstance;
-        private FinishedPlayingCallback externalCallbackInstance;
+        public delegate void FinishedPlayingPhonemeCallback(int result);
+        private FinishedPlayingPhonemeCallback phonemePlaybackCallback;
+        private FinishedPlayingPhonemeCallback internalPhonemeCallback;
+
+        //Finished playing a sentence callback
+        public delegate void FinishedPlayingSentenceCallback(int result);
+        private FinishedPlayingSentenceCallback sentencePlaybackCallback;
+   
 
         //Initialization flag
         private bool Initialized { get; set; }
@@ -44,7 +49,7 @@ namespace Taps
         [DllImport("MotuCore")]
         static extern void useDefaultOutput();
         [DllImport("MotuCore")]
-        static extern void setFinishedPlayingCallback(FinishedPlayingCallback callback);
+        static extern void setFinishedPlayingCallback(FinishedPlayingPhonemeCallback callback);
         [DllImport("MotuCore")]
         static extern bool initializationFinished();
         [DllImport("MotuCore")]
@@ -143,8 +148,9 @@ namespace Taps
         {
             createStructures();
             while (!initializationFinished()) ;
-            callbackInstance = new FinishedPlayingCallback(CallbackHandler);
-            setFinishedPlayingCallback(callbackInstance);
+            internalPhonemeCallback = new FinishedPlayingPhonemeCallback(CallbackHandlerPhoneme);
+            setFinishedPlayingCallback(internalPhonemeCallback);
+            sentencePlaybackCallback = new FinishedPlayingSentenceCallback(CallbackHandlerSentence);
             Initialized = true;
         }
 
@@ -214,41 +220,53 @@ namespace Taps
             return Initialized;
         }
 
-        //Set external callback
-        public void SetPlayingCallback(FinishedPlayingCallback externalCallback)
+        //Set external callback for playing phonemes
+        public void SetPhonemePlayingCallback(FinishedPlayingPhonemeCallback externalCallback)
         {
             if (Initialized)
             {
-                externalCallbackInstance = externalCallback;
-                setFinishedPlayingCallback(externalCallbackInstance);
+                phonemePlaybackCallback = externalCallback;
+                setFinishedPlayingCallback(phonemePlaybackCallback);
 
             }
-                
+        }
+
+        //Set external callback for playing sentences
+        public void SetSentencePlayingCallback(FinishedPlayingSentenceCallback externalCallback)
+        {
+            sentencePlaybackCallback = externalCallback;
         }
 
         //Set normal playing finished callback 
-        public void SetDefaultCallback()
+        private void SetDefaultPhonemeCallback()
         {
             if (Initialized)
             {
-                if (externalCallbackInstance != null)
-                    setFinishedPlayingCallback(externalCallbackInstance);
+                if (phonemePlaybackCallback != null)
+                    setFinishedPlayingCallback(phonemePlaybackCallback);
                 else
-                    setFinishedPlayingCallback(callbackInstance);
+                    setFinishedPlayingCallback(internalPhonemeCallback);
             }
                
         }
 
-        private void CallExternalCallback(int result)
+        //Finished playing callback handler
+        private void CallbackHandlerPhoneme(int result)
         {
-            if(externalCallbackInstance != null)
-                externalCallbackInstance(result);
+            Console.WriteLine("Default callback: Finished playing phoneme with code " + result);
         }
 
-        //Finished playing callback handler
-        private void CallbackHandler(int result)
+        //Finished playing sentence
+        private void CallbackHandlerSentence(int result)
         {
-            Console.WriteLine("Default callback: Finished playing with code " + result);
+            Console.WriteLine("Default callback: Finished playing sentence with code " + result);
+        }
+
+        //Call sentence finished playing callback
+        private void CallSentenceFinishedCallback(int result)
+        {
+            if (sentencePlaybackCallback != null)
+                sentencePlaybackCallback.Invoke(result);
         }
 
         //Play a phoneme by the label
@@ -315,11 +333,11 @@ namespace Taps
         }
 
         //Play a sentence with a certain ICI and IWI value
-        public void PlaySentence(string sentence, int ici, int iwi)
+        public void PlaySentence(string sentence, int ici, int iwi, bool startFlag)
         {
             if (Initialized)
             {
-                SentencePlayingThread thread = new SentencePlayingThread(ici, iwi, sentence);
+                SentencePlayingThread thread = new SentencePlayingThread(ici, iwi, sentence, startFlag);
                 thread.Start();
             }
 
@@ -406,7 +424,17 @@ namespace Taps
         public void Dispose()
         {
             if (Initialized)
+            {
                 clearAll();
+                Initialized = false;
+            }
+        }
+
+        //Restart the service if disposed
+        public void Restart()
+        {
+            if (!Initialized)
+                Initialize();
         }
 
         //Sentence playing thread
@@ -419,15 +447,17 @@ namespace Taps
             private string Sentence { get; set; }
             private bool Running { get; set; }
             private Queue<QueuedElement> queue;
+            private bool StartFlag { get; set; }
 
-            private FinishedPlayingCallback syncCallbackInstance;
+            private FinishedPlayingPhonemeCallback syncCallbackInstance;
 
-            public SentencePlayingThread(int ici, int iwi, string sentence)
+            public SentencePlayingThread(int ici, int iwi, string sentence, bool startFlag)
             {
                 ICI = ici;
                 IWI = iwi;
+                StartFlag = startFlag;
                 Sentence = sentence;
-                syncCallbackInstance = new FinishedPlayingCallback(CallbackHandler);
+                syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
                 setFinishedPlayingCallback(syncCallbackInstance);
                 queue = new Queue<QueuedElement>();
 
@@ -443,6 +473,8 @@ namespace Taps
             private void Run()
             {
                 string[] words = Sentence.Split(' ');
+                if (StartFlag)
+                    queue.Enqueue(new QueuedElement("KNOCK", QueuedElement.types.start));
                 foreach (string word in words)
                 {
                     string formattedWord = new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
@@ -474,14 +506,15 @@ namespace Taps
                 try
                 {
                     QueuedElement first = queue.Dequeue();
-                    if (first.Type == QueuedElement.types.phoneme)
+                    if (first.Type == QueuedElement.types.phoneme || first.Type == QueuedElement.types.start)
                     {
                         Instance.PlayPhoneme(first.Symbol);
                         Running = true;
                         while (Running) ;
                     }
                     else
-                        Console.WriteLine("The first element is not a phoneme");
+                        Console.WriteLine("The first element is not a phoneme or a start flag");
+                    Instance.CallSentenceFinishedCallback(0);
                 }
                 catch (InvalidOperationException emptyException)
                 {
@@ -509,20 +542,20 @@ namespace Taps
                     }
                     catch (InvalidOperationException emptyException)
                     {
-                        Instance.SetDefaultCallback();
+                        Instance.SetDefaultPhonemeCallback();
                         Running = false;
                     }
                 }
                 else
                 {
-                    Instance.SetDefaultCallback();
+                    Instance.SetDefaultPhonemeCallback();
                     Running = false;
                 }
             }
 
             internal class QueuedElement
             {
-                public enum types { wordPause, phoneme };
+                public enum types { wordPause, phoneme, start };
                 public types Type { get; set; }
                 public string Symbol { get; set; }
                 public QueuedElement(string symbol, types type)
@@ -541,7 +574,7 @@ namespace Taps
             private float[] matrix;
             private int width;
             private int height;
-            private FinishedPlayingCallback syncCallbackInstance;
+            private FinishedPlayingPhonemeCallback syncCallbackInstance;
             private bool stop;
 
             public MatrixPlayingThread(float[] matrix, int width, int height)
@@ -549,7 +582,7 @@ namespace Taps
                 this.matrix = matrix;
                 this.width = width;
                 this.height = height;
-                syncCallbackInstance = new FinishedPlayingCallback(CallbackHandler);
+                syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
                 setFinishedPlayingCallback(syncCallbackInstance);
                 stop = false;
             }
@@ -591,13 +624,13 @@ namespace Taps
             private bool Running { get; set; }
             int index;
 
-            private FinishedPlayingCallback syncCallbackInstance;
+            private FinishedPlayingPhonemeCallback syncCallbackInstance;
 
             public PhonemeSequencePlayingThread(int ici, string[] sequence)
             {
                 ICI = ici;
                 PhonemeSequence = sequence;
-                syncCallbackInstance = new FinishedPlayingCallback(CallbackHandler);
+                syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
                 setFinishedPlayingCallback(syncCallbackInstance);
                 index = 0;
 
@@ -624,7 +657,7 @@ namespace Taps
                 {
                     Console.WriteLine("Queue empty before starting");
                 }
-                Instance.CallExternalCallback(0);
+                Instance.CallSentenceFinishedCallback(0);
                 
             }
 
@@ -641,17 +674,19 @@ namespace Taps
                     }
                     catch (Exception e)
                     {
-                        Instance.SetDefaultCallback();
+                        Instance.SetDefaultPhonemeCallback();
                         Running = false;
                     }
                 }
                 else
                 {
-                    Instance.SetDefaultCallback();
+                    Instance.SetDefaultPhonemeCallback();
                     Running = false;
                 }
             }
         }
+
+        
     }
     
 }
