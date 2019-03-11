@@ -9,6 +9,14 @@ using System.Diagnostics;
 
 namespace Taps
 {
+    //Error codes
+    public enum TapsError
+    {
+        TapsNoError,
+        TapsInternalPhonemePlayingError,
+        TapsInvalidFirstElementInSentence,
+        TapsEmptyQueueSentence
+    }
 
     public sealed class Motu
     {
@@ -24,7 +32,7 @@ namespace Taps
         private FinishedPlayingPhonemeCallback internalPhonemeCallback;
 
         //Finished playing a sentence callback
-        public delegate void FinishedPlayingSentenceCallback(int result);
+        public delegate void FinishedPlayingSentenceCallback(TapsError result);
         private FinishedPlayingSentenceCallback sentencePlaybackCallback;
    
 
@@ -220,6 +228,25 @@ namespace Taps
             return Initialized;
         }
 
+        //Get the string result of a Taps error
+        public string GetErrorStr(TapsError err)
+        {
+            switch (err)
+            {
+                case TapsError.TapsNoError:
+                    return "No error";
+                case TapsError.TapsInternalPhonemePlayingError:
+                    return "Internal erro while playing an individual phoneme";
+                case TapsError.TapsInvalidFirstElementInSentence:
+                    return "Invalid type of first phoneme in the sentence";
+                case TapsError.TapsEmptyQueueSentence:
+                    return "Phoneme transcription of sentence returned an empty sequence";
+                default:
+                    return "Unknown error code"; 
+
+            }
+        }
+
         //Set external callback for playing phonemes
         public void SetPhonemePlayingCallback(FinishedPlayingPhonemeCallback externalCallback)
         {
@@ -257,16 +284,16 @@ namespace Taps
         }
 
         //Finished playing sentence
-        private void CallbackHandlerSentence(int result)
+        private void CallbackHandlerSentence(TapsError result)
         {
             Console.WriteLine("Default callback: Finished playing sentence with code " + result);
+            
         }
 
         //Call sentence finished playing callback
-        private void CallSentenceFinishedCallback(int result)
+        public void CallSentenceFinishedCallback(TapsError result)
         {
-            if (sentencePlaybackCallback != null)
-                sentencePlaybackCallback.Invoke(result);
+            sentencePlaybackCallback.Invoke(result);
         }
 
         //Play a phoneme by the label
@@ -440,7 +467,6 @@ namespace Taps
         //Sentence playing thread
         internal class SentencePlayingThread
         {
-            private Thread _thread;
 
             private int ICI { get; set; }
             private int IWI { get; set; }
@@ -466,12 +492,6 @@ namespace Taps
             public void Start()
             {
 
-                _thread = new Thread(new ThreadStart(Run));
-                _thread.Start();
-            }
-
-            private void Run()
-            {
                 string[] words = Sentence.Split(' ');
                 if (StartFlag)
                     queue.Enqueue(new QueuedElement("KNOCK", QueuedElement.types.start));
@@ -509,18 +529,21 @@ namespace Taps
                     if (first.Type == QueuedElement.types.phoneme || first.Type == QueuedElement.types.start)
                     {
                         Instance.PlayPhoneme(first.Symbol);
-                        Running = true;
-                        while (Running) ;
                     }
                     else
-                        Console.WriteLine("The first element is not a phoneme or a start flag");
-                    Instance.CallSentenceFinishedCallback(0);
+                    {
+                        Instance.CallSentenceFinishedCallback(TapsError.TapsInvalidFirstElementInSentence);
+                    }
+
                 }
                 catch (InvalidOperationException emptyException)
                 {
-                    Console.WriteLine("Queue empty before starting");
+
+                    Instance.CallSentenceFinishedCallback(TapsError.TapsEmptyQueueSentence);
                 }
             }
+
+         
 
             private void CallbackHandler(int result)
             {
@@ -544,12 +567,14 @@ namespace Taps
                     {
                         Instance.SetDefaultPhonemeCallback();
                         Running = false;
+                        Instance.CallSentenceFinishedCallback(TapsError.TapsNoError);
                     }
                 }
                 else
                 {
                     Instance.SetDefaultPhonemeCallback();
                     Running = false;
+                    Instance.CallSentenceFinishedCallback(TapsError.TapsInternalPhonemePlayingError);
                 }
             }
 
@@ -617,8 +642,6 @@ namespace Taps
         //Phoneme Sequence playing thread
         internal class PhonemeSequencePlayingThread
         {
-            private Thread _thread;
-
             private int ICI { get; set; }
             private string[] PhonemeSequence { get; set; }
             private bool Running { get; set; }
@@ -638,28 +661,17 @@ namespace Taps
 
             public void Start()
             {
-
-                _thread = new Thread(new ThreadStart(Run));
-                _thread.Start();
-            }
-
-            private void Run()
-            {
-
                 try
                 {
                     string first = PhonemeSequence[index];
                     Instance.PlayPhoneme(first);
-                    Running = true;
-                    while (Running) ;
                 }
-                catch (InvalidOperationException emptyException)
+                catch (Exception emptyException)
                 {
-                    Console.WriteLine("Queue empty before starting");
+                    Instance.CallSentenceFinishedCallback(TapsError.TapsEmptyQueueSentence);
                 }
-                Instance.CallSentenceFinishedCallback(0);
-                
             }
+
 
             private void CallbackHandler(int result)
             {
@@ -676,12 +688,14 @@ namespace Taps
                     {
                         Instance.SetDefaultPhonemeCallback();
                         Running = false;
+                        Instance.CallSentenceFinishedCallback(TapsError.TapsNoError);
                     }
                 }
                 else
                 {
                     Instance.SetDefaultPhonemeCallback();
                     Running = false;
+                    Instance.CallSentenceFinishedCallback(TapsError.TapsInternalPhonemePlayingError);
                 }
             }
         }

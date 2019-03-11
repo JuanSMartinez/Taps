@@ -42,7 +42,7 @@ namespace SandBox
             Console.WriteLine("Played phoneme with Result " + r);
         }
 
-        public void SentenceCallback(int r)
+        public void SentenceCallback(TapsError r)
         {
             Console.WriteLine("Played a sentence with result: " + r);
         }
@@ -84,21 +84,21 @@ namespace SandBox
             //instance.PlayPhoneme("P");
             //instance.PlayPhoneme("KNOCK");
 
-            //instance.PlaySequenceOfPhonemes(new string[] { "M", "OO", "S", "D"}, 150);
+            //instance.PlaySequenceOfPhonemes(new string[] { "M", "OO", "S"}, 150);
 
             while (true)
             {
                 Console.WriteLine("Sentence to translate: ");
                 string testing = Console.ReadLine();
-
-                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
-                instance.PlaySentence(testing, 150, 300, true);
                 if (testing.Equals("QUIT"))
                     break;
+                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+                instance.PlaySentence(testing, 150, 300, true);
+                
             }
             instance.Dispose();
             Console.WriteLine("Memory disposed");
-            //Console.Read();
+            Console.Read();
         }
     }
 }
