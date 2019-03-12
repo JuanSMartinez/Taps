@@ -28,13 +28,17 @@ namespace Taps
 
         //Finished playing callback delegate
         public delegate void FinishedPlayingPhonemeCallback(int result);
-        private FinishedPlayingPhonemeCallback phonemePlaybackCallback;
-        private FinishedPlayingPhonemeCallback internalPhonemeCallback;
+        private FinishedPlayingPhonemeCallback externalPhonemePlaybackCallback;
+        private FinishedPlayingPhonemeCallback internalPhonemePlaybackCallback;
 
         //Finished playing a sentence callback
         public delegate void FinishedPlayingSentenceCallback(TapsError result);
-        private FinishedPlayingSentenceCallback sentencePlaybackCallback;
-   
+        private FinishedPlayingSentenceCallback internalSentencePlaybackCallback;
+        private FinishedPlayingSentenceCallback externalSentencePlaybackCallback;
+
+        //Sentence players
+        private PhonemeSequencePlayer sequencePlayer;
+        private SentencePlayer sentencePlayer;
 
         //Initialization flag
         private bool Initialized { get; set; }
@@ -156,9 +160,10 @@ namespace Taps
         {
             createStructures();
             while (!initializationFinished()) ;
-            internalPhonemeCallback = new FinishedPlayingPhonemeCallback(CallbackHandlerPhoneme);
-            setFinishedPlayingCallback(internalPhonemeCallback);
-            sentencePlaybackCallback = new FinishedPlayingSentenceCallback(CallbackHandlerSentence);
+            internalPhonemePlaybackCallback = new FinishedPlayingPhonemeCallback(CallbackHandlerPhoneme);
+            internalSentencePlaybackCallback = new FinishedPlayingSentenceCallback(CallbackHandlerSentence);
+            sentencePlayer = new SentencePlayer();
+            sequencePlayer = new PhonemeSequencePlayer();
             Initialized = true;
         }
 
@@ -236,7 +241,7 @@ namespace Taps
                 case TapsError.TapsNoError:
                     return "No error";
                 case TapsError.TapsInternalPhonemePlayingError:
-                    return "Internal erro while playing an individual phoneme";
+                    return "Internal error while playing an individual phoneme";
                 case TapsError.TapsInvalidFirstElementInSentence:
                     return "Invalid type of first phoneme in the sentence";
                 case TapsError.TapsEmptyQueueSentence:
@@ -252,48 +257,32 @@ namespace Taps
         {
             if (Initialized)
             {
-                phonemePlaybackCallback = externalCallback;
-                setFinishedPlayingCallback(phonemePlaybackCallback);
-
+                externalPhonemePlaybackCallback = externalCallback;
             }
         }
 
         //Set external callback for playing sentences
         public void SetSentencePlayingCallback(FinishedPlayingSentenceCallback externalCallback)
         {
-            sentencePlaybackCallback = externalCallback;
-        }
-
-        //Set normal playing finished callback 
-        private void SetDefaultPhonemeCallback()
-        {
             if (Initialized)
             {
-                if (phonemePlaybackCallback != null)
-                    setFinishedPlayingCallback(phonemePlaybackCallback);
-                else
-                    setFinishedPlayingCallback(internalPhonemeCallback);
+                externalSentencePlaybackCallback = externalCallback;
             }
-               
         }
+
 
         //Finished playing callback handler
         private void CallbackHandlerPhoneme(int result)
         {
-            Console.WriteLine("Default callback: Finished playing phoneme with code " + result);
+            if (externalPhonemePlaybackCallback != null)
+                externalPhonemePlaybackCallback.Invoke(result);
         }
 
         //Finished playing sentence
         private void CallbackHandlerSentence(TapsError result)
         {
-            Console.WriteLine("Default callback: Finished playing sentence with code " + result);
-            
-        }
-
-        //Call sentence finished playing callback
-        public void CallSentenceFinishedCallback(TapsError result)
-        {
-            sentencePlaybackCallback.Invoke(result);
+            if (externalSentencePlaybackCallback != null)
+                externalSentencePlaybackCallback.Invoke(result);
         }
 
         //Play a phoneme by the label
@@ -310,7 +299,7 @@ namespace Taps
                 else
                     return false;
             }
-            else return false;
+            return false;
         }
 
         //Play phoneme by code
@@ -364,8 +353,11 @@ namespace Taps
         {
             if (Initialized)
             {
-                SentencePlayingThread thread = new SentencePlayingThread(ici, iwi, sentence, startFlag);
-                thread.Start();
+                sentencePlayer.Sentence = sentence;
+                sentencePlayer.ICI = ici;
+                sentencePlayer.IWI = iwi;
+                sentencePlayer.StartFlag = startFlag;
+                sentencePlayer.Start();
             }
 
         }
@@ -375,8 +367,9 @@ namespace Taps
         {
             if (Initialized)
             {
-                PhonemeSequencePlayingThread thread = new PhonemeSequencePlayingThread(ici, sequence);
-                thread.Start();
+                sequencePlayer.Index = 0;
+                sequencePlayer.ICI = ici;
+                sequencePlayer.Start();
             }
         }
 
@@ -465,33 +458,34 @@ namespace Taps
         }
 
         //Sentence playing thread
-        internal class SentencePlayingThread
+        internal class SentencePlayer
         {
 
-            private int ICI { get; set; }
-            private int IWI { get; set; }
-            private string Sentence { get; set; }
-            private bool Running { get; set; }
+            public int ICI { get; set; }
+            public int IWI { get; set; }
+            public string Sentence { get; set; }
+            public bool StartFlag { get; set; }
             private Queue<QueuedElement> queue;
-            private bool StartFlag { get; set; }
-
+            private bool Running { get; set; }
             private FinishedPlayingPhonemeCallback syncCallbackInstance;
+            private FinishedPlayingPhonemeCallback previousCallback;
+            private Thread _thread;
 
-            public SentencePlayingThread(int ici, int iwi, string sentence, bool startFlag)
+            public SentencePlayer()
             {
-                ICI = ici;
-                IWI = iwi;
-                StartFlag = startFlag;
-                Sentence = sentence;
+                ICI = 150;
+                IWI = 300;
+                StartFlag = true;
+                Sentence = "";
+                Running = false;
+                previousCallback = Instance.internalPhonemePlaybackCallback;
                 syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
-                setFinishedPlayingCallback(syncCallbackInstance);
                 queue = new Queue<QueuedElement>();
 
             }
 
-            public void Start()
+            private void FillQueue()
             {
-
                 string[] words = Sentence.Split(' ');
                 if (StartFlag)
                     queue.Enqueue(new QueuedElement("KNOCK", QueuedElement.types.start));
@@ -522,28 +516,39 @@ namespace Taps
                     }
                     queue.Enqueue(new QueuedElement("Pause", QueuedElement.types.wordPause));
                 }
+            }
 
+            public void Start()
+            {
+                _thread = new Thread(new ThreadStart(Run));
+                _thread.Start();
+            }
+
+            private void Run()
+            {
+                FillQueue();
+                setFinishedPlayingCallback(syncCallbackInstance);
                 try
                 {
                     QueuedElement first = queue.Dequeue();
                     if (first.Type == QueuedElement.types.phoneme || first.Type == QueuedElement.types.start)
                     {
                         Instance.PlayPhoneme(first.Symbol);
+                        while (true) ;
                     }
                     else
                     {
-                        Instance.CallSentenceFinishedCallback(TapsError.TapsInvalidFirstElementInSentence);
+                        Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsInvalidFirstElementInSentence);
+                        return;
                     }
 
                 }
                 catch (InvalidOperationException emptyException)
                 {
-
-                    Instance.CallSentenceFinishedCallback(TapsError.TapsEmptyQueueSentence);
+                    Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsEmptyQueueSentence);
+                    return;
                 }
             }
-
-         
 
             private void CallbackHandler(int result)
             {
@@ -565,16 +570,16 @@ namespace Taps
                     }
                     catch (InvalidOperationException emptyException)
                     {
-                        Instance.SetDefaultPhonemeCallback();
-                        Running = false;
-                        Instance.CallSentenceFinishedCallback(TapsError.TapsNoError);
+                        setFinishedPlayingCallback(previousCallback);
+                        Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsNoError);
+                        _thread?.Abort();
                     }
                 }
                 else
                 {
-                    Instance.SetDefaultPhonemeCallback();
-                    Running = false;
-                    Instance.CallSentenceFinishedCallback(TapsError.TapsInternalPhonemePlayingError);
+                    setFinishedPlayingCallback(previousCallback);
+                    Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsInternalPhonemePlayingError);
+                    _thread?.Abort();
                 }
             }
 
@@ -640,38 +645,45 @@ namespace Taps
         }
 
         //Phoneme Sequence playing thread
-        internal class PhonemeSequencePlayingThread
+        internal class PhonemeSequencePlayer
         {
-            private int ICI { get; set; }
-            private string[] PhonemeSequence { get; set; }
-            private bool Running { get; set; }
-            int index;
+            public int ICI { get; set; }
+            public string[] PhonemeSequence { get; set; }
+            public int Index{get; set; }
 
             private FinishedPlayingPhonemeCallback syncCallbackInstance;
+            private FinishedPlayingPhonemeCallback previousCallback;
+            private Thread _thread;
 
-            public PhonemeSequencePlayingThread(int ici, string[] sequence)
+            public PhonemeSequencePlayer()
             {
-                ICI = ici;
-                PhonemeSequence = sequence;
+                ICI = 150;
+                PhonemeSequence = null;
                 syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
-                setFinishedPlayingCallback(syncCallbackInstance);
-                index = 0;
-
+                Index = 0;
+                previousCallback = Instance.internalPhonemePlaybackCallback;
             }
 
             public void Start()
             {
+                _thread = new Thread(new ThreadStart(Run));
+                _thread.Start();
+            }
+
+            private void Run()
+            {
                 try
                 {
-                    string first = PhonemeSequence[index];
+                    string first = PhonemeSequence[Index];
+                    setFinishedPlayingCallback(syncCallbackInstance);
                     Instance.PlayPhoneme(first);
+                    while (true) ;
                 }
                 catch (Exception emptyException)
                 {
-                    Instance.CallSentenceFinishedCallback(TapsError.TapsEmptyQueueSentence);
+                    Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsEmptyQueueSentence);
                 }
             }
-
 
             private void CallbackHandler(int result)
             {
@@ -679,23 +691,23 @@ namespace Taps
                 {
                     try
                     {
-                        index += 1;
-                        string phoneme = PhonemeSequence[index];
+                        Index += 1;
+                        string phoneme = PhonemeSequence[Index];
                         Thread.Sleep(ICI);
                         Instance.PlayPhoneme(phoneme);
                     }
                     catch (Exception e)
                     {
-                        Instance.SetDefaultPhonemeCallback();
-                        Running = false;
-                        Instance.CallSentenceFinishedCallback(TapsError.TapsNoError);
+                        setFinishedPlayingCallback(previousCallback);
+                        _thread?.Abort();
+                        Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsNoError);
                     }
                 }
                 else
                 {
-                    Instance.SetDefaultPhonemeCallback();
-                    Running = false;
-                    Instance.CallSentenceFinishedCallback(TapsError.TapsInternalPhonemePlayingError);
+                    setFinishedPlayingCallback(previousCallback);
+                    _thread?.Abort();
+                    Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsInternalPhonemePlayingError);
                 }
             }
         }
