@@ -387,7 +387,7 @@ namespace Taps
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.UseShellExecute = false;
             startInfo.RedirectStandardOutput = true;
-
+            startInfo.CreateNoWindow = true;
             startInfo.FileName = Instance.CygwinPath;
             startInfo.Arguments = "/c -t \"" + sentence + "\" -ps -o none";
             process.StartInfo = startInfo;
