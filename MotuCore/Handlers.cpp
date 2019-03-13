@@ -11,8 +11,9 @@ namespace Handlers
 			//phonemeArray[i] = *(new Phoneme(i));
 			phonemeArray[i].setCode(i);
 			phonemeArray[i].initializeData();
-			threadsFinished++;
+			
 		}
+		threadsFinished++;
 	}
 
 	//Constructor
@@ -132,7 +133,7 @@ namespace Handlers
 		use_motu = true;
 		//phonemes = (Phoneme*)malloc(PHONEMES * sizeof(Phoneme));
 		phonemes = new Phoneme[PHONEMES];
-		
+		threadsFinished = 0;
 		int setSize = PHONEMES / INIT_THREADS;
 		for (int k = 0; k < INIT_THREADS; ++k)
 		{
@@ -154,7 +155,7 @@ namespace Handlers
 	//Initialization finished
 	bool MotuPlayer::initializationFinished()
 	{
-		return threadsFinished == PHONEMES;
+		return threadsFinished == INIT_THREADS;
 		//return true;
 	}
 

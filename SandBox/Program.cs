@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Taps;
+using System.Threading;
 
 namespace SandBox
 {
@@ -58,7 +59,7 @@ namespace SandBox
             stopwatch.Start();
             Motu instance = Motu.Instance;
             Console.WriteLine("Waiting for initialization ...");
-            while (!instance.IsInitialized()) ;
+            while (!instance.IsInitialized()) Thread.Sleep(1000);
             stopwatch.Stop();
             long timeMs = stopwatch.ElapsedMilliseconds;
             Console.WriteLine("Done after " + timeMs + " ms");

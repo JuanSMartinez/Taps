@@ -5,7 +5,6 @@ Handlers::MotuPlayer* player;
 std::mutex* mutex;
 FinishedPlayingPhonemeCallback Handler;
 
-
 void AsyncSinePlay(void*) 
 {
 	if (mutex->try_lock())
@@ -272,6 +271,7 @@ DLLEXPORT void setFinishedPlayingCallback(FinishedPlayingPhonemeCallback handler
 {
 	Handler = handler;
 }
+
 
 //Initialization finished
 DLLEXPORT bool initializationFinished()
