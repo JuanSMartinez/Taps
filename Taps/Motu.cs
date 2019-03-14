@@ -643,6 +643,7 @@ namespace Taps
 
             private void CallbackHandler(int result)
             {
+                setFinishedPlayingCallback(Instance.internalPhonemePlaybackCallback);
                 Instance.internalPhonemePlaybackCallback(result);
                 handle.Free();
                 _thread?.Abort();
