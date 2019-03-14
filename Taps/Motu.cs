@@ -40,6 +40,9 @@ namespace Taps
         private PhonemeSequencePlayer sequencePlayer;
         private SentencePlayer sentencePlayer;
 
+        //Arbitrary matrix player
+        private MatrixPlayer matrixPlayer;
+
         //Initialization flag
         private bool Initialized { get; set; }
 
@@ -164,6 +167,7 @@ namespace Taps
             internalSentencePlaybackCallback = new FinishedPlayingSentenceCallback(CallbackHandlerSentence);
             sentencePlayer = new SentencePlayer();
             sequencePlayer = new PhonemeSequencePlayer();
+            matrixPlayer = new MatrixPlayer();
             Initialized = true;
         }
 
@@ -376,8 +380,13 @@ namespace Taps
         //Launc a thread to play a flattened matrix
         private void PlayFlatMatrix(float[] matrix, int width, int height)
         {
-            MatrixPlayingThread thread = new MatrixPlayingThread(matrix, width, height);
-            thread.Start();
+            if (width > 0 && height > 0)
+            {
+                matrixPlayer.Matrix = matrix;
+                matrixPlayer.Width = width;
+                matrixPlayer.Height = height;
+                matrixPlayer.Start();
+            }
         }
 
         //Get string sequence of phonemes of a text using flite
@@ -597,24 +606,22 @@ namespace Taps
         }
 
         //Matrix playing thread
-        internal class MatrixPlayingThread
+        internal class MatrixPlayer
         {
             private Thread _thread;
 
-            private float[] matrix;
-            private int width;
-            private int height;
+            public float[] Matrix;
+            public int Width;
+            public int Height;
             private FinishedPlayingPhonemeCallback syncCallbackInstance;
-            private bool stop;
+            private GCHandle handle;
+            private IntPtr pointer;
 
-            public MatrixPlayingThread(float[] matrix, int width, int height)
+            public MatrixPlayer()
             {
-                this.matrix = matrix;
-                this.width = width;
-                this.height = height;
                 syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
-                setFinishedPlayingCallback(syncCallbackInstance);
-                stop = false;
+             
+                
             }
 
             public void Start()
@@ -625,22 +632,21 @@ namespace Taps
 
             private void Run()
             {
-                GCHandle handle = GCHandle.Alloc(matrix, GCHandleType.Pinned);
-                IntPtr pointer = handle.AddrOfPinnedObject();
-                playMatrix(pointer, width, height);
-                while (!stop)
+                setFinishedPlayingCallback(syncCallbackInstance);
+                handle = GCHandle.Alloc(Matrix, GCHandleType.Pinned);
+                pointer = handle.AddrOfPinnedObject();
+                playMatrix(pointer, Width, Height);
+                while (true)
                     ;
-                handle.Free();
 
             }
 
             private void CallbackHandler(int result)
             {
-                if (result == -1)
-                {
-                    Console.WriteLine("Finish playing with error");
-                }
-                stop = true;
+                Instance.internalPhonemePlaybackCallback(result);
+                handle.Free();
+                _thread?.Abort();
+    
             }
         }
 
