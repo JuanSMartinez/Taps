@@ -48,6 +48,11 @@ namespace SandBox
             Console.WriteLine("Played a sentence with result: " + r);
         }
 
+        public void KnockCallback()
+        {
+            Console.WriteLine("Played");
+        }
+
         static void Main(string[] args)
         {
             
@@ -65,6 +70,7 @@ namespace SandBox
             Console.WriteLine("Done after " + timeMs + " ms");
             Motu.Instance.SetPhonemePlayingCallback(prog.Callback);
             Motu.Instance.SetSentencePlayingCallback(prog.SentenceCallback);
+            
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -94,7 +100,7 @@ namespace SandBox
                 if (testing.Equals("QUIT"))
                     break;
                 Console.WriteLine(instance.GetPhonemesOfSentence(testing));
-                instance.PlaySentence(testing, 150, 300, true);
+                instance.PlaySentence(testing, 150, 300, prog.KnockCallback);
                 
             }
             instance.Dispose();

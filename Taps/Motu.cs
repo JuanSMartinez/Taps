@@ -36,6 +36,9 @@ namespace Taps
         private FinishedPlayingSentenceCallback internalSentencePlaybackCallback;
         private FinishedPlayingSentenceCallback externalSentencePlaybackCallback;
 
+        //Optional callback to signal that a start flag played 
+        public delegate void PlayedStartFlagCallback();
+
         //Sentence players
         private PhonemeSequencePlayer sequencePlayer;
         private SentencePlayer sentencePlayer;
@@ -353,14 +356,29 @@ namespace Taps
         }
 
         //Play a sentence with a certain ICI and IWI value
-        public void PlaySentence(string sentence, int ici, int iwi, bool startFlag)
+        public void PlaySentence(string sentence, int ici, int iwi)
         {
             if (Initialized)
             {
                 sentencePlayer.Sentence = sentence;
                 sentencePlayer.ICI = ici;
                 sentencePlayer.IWI = iwi;
-                sentencePlayer.StartFlag = startFlag;
+                sentencePlayer.StartFlag = false;
+                sentencePlayer.Start();
+            }
+
+        }
+
+        //Play a sentence with a certain ICI and IWI value and an optional callback to signal that the signal
+        public void PlaySentence(string sentence, int ici, int iwi, PlayedStartFlagCallback callback)
+        {
+            if (Initialized)
+            {
+                sentencePlayer.Sentence = sentence;
+                sentencePlayer.ICI = ici;
+                sentencePlayer.IWI = iwi;
+                sentencePlayer.StartFlag = true;
+                sentencePlayer.OptionalStartFlagCallback = callback;
                 sentencePlayer.Start();
             }
 
@@ -373,6 +391,20 @@ namespace Taps
             {
                 sequencePlayer.Index = 0;
                 sequencePlayer.ICI = ici;
+                sequencePlayer.StartFlag = false;
+                sequencePlayer.Start();
+            }
+        }
+
+        //Play a sequence of phonemes with a signaling callback for when the first phoneme is played
+        public void PlaySequenceOfPhonemes(string[] sequence, int ici, PlayedStartFlagCallback callback)
+        {
+            if (Initialized)
+            {
+                sequencePlayer.Index = 0;
+                sequencePlayer.ICI = ici;
+                sequencePlayer.OptionalStartFlagCallback = callback;
+                sequencePlayer.StartFlag = true;
                 sequencePlayer.Start();
             }
         }
@@ -445,8 +477,27 @@ namespace Taps
                 result += "PAUSE" + ",";
             }
             return result.Substring(0, result.Length - 7);
+        }
 
-
+        //Get the string phoneme sequence of a sentence as given by flite
+        public string GetPhonemesOfSentenceFlite(string sentence)
+        {
+            string[] words = sentence.Split(' ');
+            string result = "";
+            foreach (string word in words)
+            {
+                string formattedWord = new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
+                if (formattedWord != null && !formattedWord.Equals(""))
+                {
+                    string[] phonemes = GetFlitePhonemeSequenceOf(formattedWord);
+                    foreach (string phoneme in phonemes)
+                    {
+                        result += phoneme + ",";
+                    }
+                }
+                result += "PAUSE" + ",";
+            }
+            return result.Substring(0, result.Length - 7);
         }
 
         //Clear all the data initialized
@@ -474,21 +525,25 @@ namespace Taps
             public int IWI { get; set; }
             public string Sentence { get; set; }
             public bool StartFlag { get; set; }
+            public PlayedStartFlagCallback OptionalStartFlagCallback { get; set; }
             private Queue<QueuedElement> queue;
             private bool Running { get; set; }
             private FinishedPlayingPhonemeCallback syncCallbackInstance;
             private FinishedPlayingPhonemeCallback previousCallback;
             private Thread _thread;
+            private int phonemesPlayed;
 
             public SentencePlayer()
             {
                 ICI = 150;
                 IWI = 300;
-                StartFlag = true;
+                StartFlag = false;
                 Sentence = "";
                 Running = false;
+                phonemesPlayed = 0;
                 previousCallback = Instance.internalPhonemePlaybackCallback;
                 syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
+                OptionalStartFlagCallback = null;
                 queue = new Queue<QueuedElement>();
 
             }
@@ -529,6 +584,8 @@ namespace Taps
 
             public void Start()
             {
+                Running = false;
+                phonemesPlayed = 0;
                 _thread = new Thread(new ThreadStart(Run));
                 _thread.Start();
             }
@@ -563,8 +620,12 @@ namespace Taps
             {
                 if (result == 0)
                 {
+                    phonemesPlayed++;
                     try
                     {
+                        if (phonemesPlayed == 1 && StartFlag)
+                            OptionalStartFlagCallback?.Invoke();
+
                         QueuedElement element = queue.Dequeue();
                         if (element.Type == QueuedElement.types.phoneme)
                         {
@@ -657,10 +718,13 @@ namespace Taps
             public int ICI { get; set; }
             public string[] PhonemeSequence { get; set; }
             public int Index{get; set; }
+            public bool StartFlag { get; set; }
+            public PlayedStartFlagCallback OptionalStartFlagCallback { get; set; }
 
             private FinishedPlayingPhonemeCallback syncCallbackInstance;
             private FinishedPlayingPhonemeCallback previousCallback;
             private Thread _thread;
+            private int phonemesPlayed;
 
             public PhonemeSequencePlayer()
             {
@@ -668,11 +732,16 @@ namespace Taps
                 PhonemeSequence = null;
                 syncCallbackInstance = new FinishedPlayingPhonemeCallback(CallbackHandler);
                 Index = 0;
+                phonemesPlayed = 0;
+                StartFlag = false;
+                OptionalStartFlagCallback = null;
                 previousCallback = Instance.internalPhonemePlaybackCallback;
             }
 
             public void Start()
             {
+                Index = 0;
+                phonemesPlayed = 0;
                 _thread = new Thread(new ThreadStart(Run));
                 _thread.Start();
             }
@@ -696,8 +765,11 @@ namespace Taps
             {
                 if (result == 0)
                 {
+                    phonemesPlayed++;
                     try
                     {
+                        if (phonemesPlayed == 1 && StartFlag)
+                            OptionalStartFlagCallback?.Invoke();
                         Index += 1;
                         string phoneme = PhonemeSequence[Index];
                         Thread.Sleep(ICI);
