@@ -482,22 +482,18 @@ namespace Taps
         //Get the string phoneme sequence of a sentence as given by flite
         public string GetPhonemesOfSentenceFlite(string sentence)
         {
-            string[] words = sentence.Split(' ');
-            string result = "";
-            foreach (string word in words)
-            {
-                string formattedWord = new string(word.Where(c => !char.IsPunctuation(c)).ToArray());
-                if (formattedWord != null && !formattedWord.Equals(""))
-                {
-                    string[] phonemes = GetFlitePhonemeSequenceOf(formattedWord);
-                    foreach (string phoneme in phonemes)
-                    {
-                        result += phoneme + ",";
-                    }
-                }
-                result += "PAUSE" + ",";
-            }
-            return result.Substring(0, result.Length - 7);
+            Process process = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.CreateNoWindow = true;
+            startInfo.FileName = Instance.CygwinPath;
+            startInfo.Arguments = "/c -t \"" + sentence + "\" -ps -o none";
+            process.StartInfo = startInfo;
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            return output;
         }
 
         //Clear all the data initialized
@@ -623,13 +619,12 @@ namespace Taps
                     phonemesPlayed++;
                     try
                     {
-                        if (phonemesPlayed == 1 && StartFlag)
-                            OptionalStartFlagCallback?.Invoke();
-
                         QueuedElement element = queue.Dequeue();
                         if (element.Type == QueuedElement.types.phoneme)
                         {
                             Thread.Sleep(ICI);
+                            if (phonemesPlayed == 1 && StartFlag)
+                                OptionalStartFlagCallback?.Invoke();
                             Instance.PlayPhoneme(element.Symbol);
                         }
                         else
@@ -768,11 +763,11 @@ namespace Taps
                     phonemesPlayed++;
                     try
                     {
-                        if (phonemesPlayed == 1 && StartFlag)
-                            OptionalStartFlagCallback?.Invoke();
                         Index += 1;
                         string phoneme = PhonemeSequence[Index];
                         Thread.Sleep(ICI);
+                        if (phonemesPlayed == 1 && StartFlag)
+                            OptionalStartFlagCallback?.Invoke();
                         Instance.PlayPhoneme(phoneme);
                     }
                     catch (Exception e)
