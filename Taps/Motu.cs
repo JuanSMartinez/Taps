@@ -389,7 +389,7 @@ namespace Taps
         {
             if (Initialized)
             {
-                sequencePlayer.Index = 0;
+                sequencePlayer.PhonemeSequence = sequence;
                 sequencePlayer.ICI = ici;
                 sequencePlayer.StartFlag = false;
                 sequencePlayer.Start();
@@ -401,7 +401,7 @@ namespace Taps
         {
             if (Initialized)
             {
-                sequencePlayer.Index = 0;
+                sequencePlayer.PhonemeSequence = sequence;
                 sequencePlayer.ICI = ici;
                 sequencePlayer.OptionalStartFlagCallback = callback;
                 sequencePlayer.StartFlag = true;
@@ -750,7 +750,7 @@ namespace Taps
                     Instance.PlayPhoneme(first);
                     while (true) ;
                 }
-                catch (Exception emptyException)
+                catch (IndexOutOfRangeException emptyException)
                 {
                     Instance.internalSentencePlaybackCallback.Invoke(TapsError.TapsEmptyQueueSentence);
                 }
@@ -765,7 +765,8 @@ namespace Taps
                     {
                         Index += 1;
                         string phoneme = PhonemeSequence[Index];
-                        Thread.Sleep(ICI);
+                        if(ICI > 0)
+                            Thread.Sleep(ICI);
                         if (phonemesPlayed == 1 && StartFlag)
                             OptionalStartFlagCallback?.Invoke();
                         Instance.PlayPhoneme(phoneme);

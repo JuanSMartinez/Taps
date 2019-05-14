@@ -70,7 +70,7 @@ namespace SandBox
             Console.WriteLine("Done after " + timeMs + " ms");
             Motu.Instance.SetPhonemePlayingCallback(prog.Callback);
             Motu.Instance.SetSentencePlayingCallback(prog.SentenceCallback);
-            
+
             //Console.WriteLine("Using default output");
             //instance.UseDefault();
             //Console.WriteLine("TestPlay " + instance.TestPlay());
@@ -91,18 +91,28 @@ namespace SandBox
             //instance.PlayPhoneme("P");
             //instance.PlayPhoneme("KNOCK");
 
-            //instance.PlaySequenceOfPhonemes(new string[] { "M", "OO", "S"}, 150);
 
             while (true)
             {
-                Console.WriteLine("Sentence to translate: ");
-                string testing = Console.ReadLine();
-                if (testing.Equals("QUIT"))
+                Console.WriteLine("ICI for sequence of 3 N's or QUIT to close: ");
+                string ici = Console.ReadLine();
+                if (ici.Equals("QUIT"))
                     break;
-                Console.WriteLine(instance.GetPhonemesOfSentence(testing));
-                instance.PlaySentence(testing, 150, 300, prog.KnockCallback);
-                
+                int interval = int.Parse(ici);
+                instance.PlaySequenceOfPhonemes(new string[] { "N", "N", "N" }, interval);
+
             }
+
+            //while (true)
+            //{
+            //    Console.WriteLine("Sentence to translate: ");
+            //    string testing = Console.ReadLine();
+            //    if (testing.Equals("QUIT"))
+            //        break;
+            //    Console.WriteLine(instance.GetPhonemesOfSentence(testing));
+            //    instance.PlaySentence(testing, 150, 300, prog.KnockCallback);
+
+            //}
             instance.Dispose();
             Console.WriteLine("Memory disposed");
             Console.Read();
